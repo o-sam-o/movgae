@@ -1,0 +1,15 @@
+{% extends 'movie_base.html' %}
+
+{% block content %}
+	<h1>{{ category.name|capfirst }}</h1>
+	
+	{% if movies %}
+	<ul>
+		{% for movie in movies %}
+			<li><a href="http://www.imdb.com/title/tt{{movie.movie.imdb_id}}">{{movie.movie.title}} ({{movie.movie.year}})</a></li>
+		{% endfor %}
+	</ul>
+	{% else %}
+		No Movies
+	{% endif %}
+{% endblock content %}

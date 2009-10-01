@@ -1,0 +1,26 @@
+* Download GAE
+* Download app-engine-patch 1.1
+* create project and app
+* create models
+* create admin.py
+* update urls
+* create view
+* create base template
+* create settings.py add css
+* create task queues
+	* create refresh queue - yql
+* create unit test for movie name extraction
+* create find movie task
+* hack imdbpy 156 parser.http.__init__.py
+* hack http/utils.py 378 remove lxml
+* add error handling to find movie task
+* update refresh category task to publish to find movie queue
+* create refresh category reduce
+* create index page
+* clean up / remove apps (removed mypp, registration, bluecss, index.yaml, media, templates)
+* generate media - needed for admin css
+* deploy to prod
+* add refresh cron
+
+OTHER POINTS
+* mac ports to sort python?
