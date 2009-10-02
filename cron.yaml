@@ -1,4 +1,4 @@
 cron:
 - description: kicks off the refresh of all movie categories
-  url: /task/refreshAll
+  url: /task/refreshAll/
   schedule: every 3 hours

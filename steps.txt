@@ -21,6 +21,7 @@
 * generate media - needed for admin css
 * deploy to prod
 * add refresh cron
+* improve performance - other_titles on TopMovie entity
 
 OTHER POINTS
 * mac ports to sort python?
