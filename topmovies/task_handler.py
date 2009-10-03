@@ -212,14 +212,14 @@ def get_movie_trailer(request):
     logging.info('Searching for youtube trailer for movie %s', movie.title)
     client = gdata.youtube.service.YouTubeService()
     query = gdata.youtube.service.YouTubeVideoQuery()
-    query.vq = '%s trailer' % (movie.title)
+    query.vq = u'%s trailer' % (movie.title)
     #query.orderby = 'viewCount'
     query.max_results = '1'
     feed = client.YouTubeQuery(query)
     
     if feed.entry:
         for entry in feed.entry:
-            logging.info('Found youtube trailer: ' + entry.GetSwfUrl())
+            logging.info('Found youtube trailer: %s', entry.GetSwfUrl())
             movie.youtube_url = entry.GetSwfUrl()
             break
         movie.put()
@@ -230,17 +230,40 @@ def get_movie_trailer(request):
     
 def get_movie_details(raw_name):
     """Uses regex to extract a movies name and year from a torrent files name"""
+    #Strip dots which are normally used instead of spaces
     replace_pattern = re.compile(r"\.")
     clean_name = replace_pattern.sub(' ', raw_name)
     
-    name_pattern = re.compile(r'[^\(\[]+(?=(1080p|\(\d{4}\)|\[\d{4}\]|\d{4}|DVDRip|720p|R5|DVDSCR|BDRip|\s+CAM))')
-    year_pattern = re.compile(r'\d{4}(?=[^p])')
+    torrent_types = ['1080p', '720p', 'DVDRip', 'R5', 'DVDSCR', 'BDRip', '\\s+CAM']
     
-    match = name_pattern.match(clean_name)
-    if not match:
+    name_type_pattern = re.compile('[^\\(\\[]+(?=(' + '|'.join(torrent_types) + '))', re.IGNORECASE)
+    #Note: ensure no p after digitals as otherwise can hit 1080p by mistake
+    name_year_pattern = re.compile(r'[^\(\[]+(?=(\(\d{4}\)|\[\d{4}\]|\d{4}[^p]+))')
+
+    #Combining year and type into a single pattern doesnt seem to work as some torrent names
+    #have year then type and combined pattern seems to include the year as part of the name
+    name_type_match = name_type_pattern.match(clean_name)
+    name_year_match = name_year_pattern.match(clean_name)
+    
+    movie_name = None
+    if not name_type_match and not name_year_match:
         return None, None
-    movie_name = match.group(0)
-    
+    elif not name_type_match:
+        movie_name = name_year_match.group(0)
+    elif not name_year_match:
+        movie_name = name_type_match.group(0)
+    else:
+        year_movie_name = name_year_match.group(0)
+        type_movie_name = name_type_match.group(0)
+        logging.debug('Year: "%s" Type: "%s"', year_movie_name, type_movie_name)
+        #We want to shortest one as the longer one will contain the year or type and we only want the name
+        if len(year_movie_name) < len(type_movie_name):
+            movie_name = year_movie_name
+        else:
+            movie_name = type_movie_name
+            
+    #Check for p so we dont hit 1080p
+    year_pattern = re.compile(r'\d{4}(?=[^p])')
     #logging.info('Left over: %s', clean_name[len(movie_name):])
     year_match = year_pattern.search(clean_name[len(movie_name):])
     movie_year = None

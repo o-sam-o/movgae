@@ -10,6 +10,7 @@ class MovieNameExtractionTest(unittest.TestCase):
         self.movieDetailsTest('Star.Trek (2009) DvDRip-', 'Star Trek', 2009)
         self.movieDetailsTest('Star.Trek [2009] DvDRip-', 'Star Trek', 2009)
         self.movieDetailsTest('District.9.2009.iTALiAN.MD.R5.XviD-SiLENT[UltimaFrontiera]', 'District 9', 2009)
+        self.movieDetailsTest('GI Joe The Rise Of Cobra 2009 DvdRip Xvid {1337x}-Noir', 'GI Joe The Rise Of Cobra', 2009)
     
     def testMovieQuality(self):    
         self.movieDetailsTest('Star Trek DVDRip XviD-iMBT[RLSLOG.IN]', 'Star Trek', None)
@@ -22,6 +23,7 @@ class MovieNameExtractionTest(unittest.TestCase):
         #Case check
         self.movieDetailsTest('Star Trek dvdrip XviD-iMBT[RLSLOG.IN]', 'Star Trek', None)
         self.movieDetailsTest('Star Trek DVDRIP XviD-iMBT[RLSLOG.IN]', 'Star Trek', None)
+        self.movieDetailsTest('Star Trek DvdRip XviD-iMBT[RLSLOG.IN]', 'Star Trek', None)
     
     def testFormatInName(self):
         #Format name
