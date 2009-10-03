@@ -1,7 +1,9 @@
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 from ragendja.template import render_to_response
 from django.http import Http404
+from django import conf
 
 from topmovies import models
 
@@ -19,4 +21,11 @@ def movie_category(request, category_name):
     movies = models.CategoryResult.all().filter('category =', category).filter('active =', True).order('order').fetch(50)
             
     return render_to_response(request, 'category_list.html', {'category': category, 'movies': movies})
+    
+def get_movie_image(request, imdb_id):
+    movie_image = models.TopMovieImage.all().filter('imdb_id =', imdb_id).get()
+    if not movie_image:
+        return HttpResponseRedirect(conf.settings.MEDIA_URL + 'topmovies/no_preview.jpg')   
+    
+    return HttpResponse(content=movie_image.img_data, mimetype=movie_image.content_type)
     

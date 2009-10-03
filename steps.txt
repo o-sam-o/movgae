@@ -12,7 +12,7 @@
 * create unit test for movie name extraction
 * create find movie task
 * hack imdbpy 156 parser.http.__init__.py
-* hack http/utils.py 378 remove lxml
+* hack imdbpy http/utils.py 378 remove lxml
 * add error handling to find movie task
 * update refresh category task to publish to find movie queue
 * create refresh category reduce
@@ -20,8 +20,14 @@
 * clean up / remove apps (removed mypp, registration, bluecss, index.yaml, media, templates)
 * generate media - needed for admin css
 * deploy to prod
-* add refresh cron
+* add refresh cron (missing trailing slash gotcha)
 * improve performance - other_titles on TopMovie entity
+* add get image into own task
+* add serve image view
+* add url get retries
+* get youtube trailer
+* install gdata -> used http://code.google.com/p/hello-youtube/downloads/detail?name=02_hello_python_client_library_v3.zip
+* copied http://code.google.com/p/hello-youtube/source/browse/trunk/03_hello_youtube_search_query/main.py
 
 OTHER POINTS
 * mac ports to sort python?

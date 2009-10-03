@@ -4,11 +4,12 @@
 	<h1>{{ category.name|capfirst }}</h1>
 	
 	{% if movies %}
-	<ul>
 		{% for movie in movies %}
-			<li><a href="http://www.imdb.com/title/tt{{movie.movie.imdb_id}}">{{movie.movie.title}} ({{movie.movie.year}})</a></li>
+			<div style="float: left;padding: 5px; min-height:200px;" align="center">
+				<a href="http://www.imdb.com/title/tt{{movie.movie.imdb_id}}">{{movie.movie.title}} ({{movie.movie.year}})</a><br/>
+				<img src="/movie/{{movie.movie.imdb_id}}.jpg" style="padding:3px;"/>
+			</div>
 		{% endfor %}
-	</ul>
 	{% else %}
 		No Movies
 	{% endif %}

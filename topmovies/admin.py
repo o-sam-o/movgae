@@ -1,7 +1,8 @@
 from django.contrib import admin
-from topmovies.models import MovieCategory, TopMovie, CategoryResult, GetMovieFailure
+from topmovies import models
 
-admin.site.register(TopMovie)
-admin.site.register(MovieCategory)
-admin.site.register(CategoryResult)
-admin.site.register(GetMovieFailure)
+admin.site.register(models.TopMovie)
+admin.site.register(models.MovieCategory)
+admin.site.register(models.CategoryResult)
+admin.site.register(models.GetMovieFailure)
+admin.site.register(models.TopMovieImage)

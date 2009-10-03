@@ -14,11 +14,18 @@ from django.core.urlresolvers import reverse
 
 from imdb import IMDb
 
+import gdata.urlfetch
+import gdata.service
+import gdata.youtube
+import gdata.youtube.service
+gdata.service.http_request_handler = gdata.urlfetch
+
 from topmovies import models
 from topmovies import settings
+from topmovies import tm_util
 
 def schedule_refreshes(request):
-    logging.debug('Scheduling refreshes')
+    logging.info('Scheduling refreshes')
     for category in models.MovieCategory.all().filter('active = ', True):
         for i in range(0, settings.MOVIE_REFRESH_PAGES):
             taskqueue.add(url=reverse('topmovies.task_handler.refresh_movie_category'), 
@@ -37,7 +44,7 @@ def refresh_movie_category(request):
     elif not category.yql:
         logging.error('No yql for category %s' % (category.name))
         return HttpResponse('No YQL for category')
-    logging.debug('Refreshing movie category %s', category.name)
+    logging.info('Refreshing movie category %s', category.name)
         
     query_offset = 0
     if 'offset' in request.REQUEST:
@@ -53,7 +60,7 @@ def refresh_movie_category(request):
         if 'content' not in raw_result:
             continue
         raw_name = strip_white_pattern.sub(' ', raw_result['content'])
-        logging.debug('Raw Name [%s]: %s', category.name, raw_name)
+        logging.info('Raw Name [%s]: %s', category.name, raw_name)
         cat_results.append(models.CategoryResult(raw_movie_name=raw_name, category=category, active=False, order=index))
     
     db.put(cat_results)
@@ -78,7 +85,7 @@ def find_movie(request):
         logging.error('Unable to find CategoryResult %s', request.REQUEST['cat_result'])
         return HttpResponse('Error: Unable to find CategoryResult')
         
-    logging.debug('Finding movie for raw name %s' % cat_result.raw_movie_name)
+    logging.info('Finding movie for raw name %s' % cat_result.raw_movie_name)
     try:
         movie_name, movie_year = get_movie_details(cat_result.raw_movie_name)
         if not movie_name:
@@ -87,9 +94,9 @@ def find_movie(request):
         #First check to see if we already have a matching movie
         existing_movie = None
         if movie_year:
-            existing_movie = models.TopMovie.all().filter('title = ', movie_name).filter('year = ', movie_year).get()
+            existing_movie = models.TopMovie.all().filter('other_titles = ', movie_name).filter('year = ', movie_year).get()
         else:
-            existing_movie = models.TopMovie.all().filter('title = ', movie_name).get()
+            existing_movie = models.TopMovie.all().filter('other_titles = ', movie_name).get()
     
         if existing_movie:
             logging.info("Found existing movie entity for raw movie name %s", cat_result.raw_movie_name)
@@ -104,12 +111,10 @@ def find_movie(request):
     
         result_movie = None
         for movie in movies:
-            logging.debug("Found movie '%s' %s [%s] for search '%s'", 
+            logging.info("Found movie '%s' %s [%s] for search '%s'", 
                 movie['title'], movie['year'], movie.movieID, movie_name)
             if not movie_year or movie_year == movie['year']:
-                #Get additional details about movie as match
-                result_movie = ia.get_movie(movie.movieID)
-                #result_movie = movie
+                result_movie = movie
                 break
     
         if not result_movie:
@@ -118,20 +123,21 @@ def find_movie(request):
         logging.info("Found match imdb movie %s", result_movie.movieID)
         existing_movie = models.TopMovie.all().filter('title = ', result_movie['title']).filter('year = ', result_movie['year']).get()
         if existing_movie:
+            #Add into other titles so we dont have to hit imdb again
+            existing_movie.other_titles.append(movie_name)
+            existing_movie.put()
             cat_result.movie = existing_movie
         else:
-            logging.debug('Adding new movie %s', result_movie['title'])
-            cover_url = None
-            if 'cover url' in result_movie:
-                cover_url = result_movie['cover url']
-            else:
-                logging.warn('No cover art found for ' + str(result_movie))
+            logging.info('Adding new movie %s', result_movie['title'])
             movie_entity = models.TopMovie(title=result_movie['title'],
                                 year=result_movie['year'],
                                 imdb_id=result_movie.movieID,
-                                image_link=cover_url)
+                                other_names=[movie_name])
             movie_entity.put()   
             cat_result.movie = movie_entity
+            #Schedule task to download a thumbnail image and try to find a trailer on youtube
+            taskqueue.add(url=reverse('topmovies.task_handler.get_movie_image'), params={'imdb_id': result_movie.movieID})
+            taskqueue.add(url=reverse('topmovies.task_handler.get_movie_trailer'), params={'imdb_id': result_movie.movieID})
         cat_result.put()
     
         return HttpResponse("Done.  Added TopMovie %s" % cat_result.movie.key())
@@ -146,6 +152,81 @@ def find_movie(request):
         
         cat_result.delete()
         return HttpResponse("Error: %s" % error_details)
+
+def get_movie_image(request):
+    if 'imdb_id' not in request.REQUEST:
+        return HttpResponseServerError('Unable to load movie poster')    
+    imdb_id = request.REQUEST['imdb_id']
+    movie_image = models.TopMovieImage.all().filter('imdb_id =', imdb_id).get()
+    if movie_image:
+        logging.info('image entity already exists for %s', imdb_id)
+        return HttpResponse('Movie already exists')
+    logging.info('Get movie image for imdb id %s', imdb_id)
+    retries = 0
+    if 'retries' in request.REQUEST:
+        retries = int(request.REQUEST['retries'])
+    
+    ia = IMDb('http')
+    imdb_movie = ia.get_movie(imdb_id)
+    try:
+        cover_url = imdb_movie['cover']
+        logging.info('Got url %s', cover_url)
+        
+        #Download the image
+        img_data = None
+        try:
+            img_download = urllib.urlopen(cover_url)
+            img_data = img_download.read()
+            img_download.close()
+        except:
+            logging.error('Img fetch for %s failed: %s', cover_url, str(sys.exc_info()[1]))
+            if retries < settings.GET_MOVIES_RETRIES:
+                taskqueue.add(url=reverse('topmovies.task_handler.get_movie_image'), 
+                    params={'imdb_id': result_movie.movieID, 'retries': retries + 1})
+            return HttpResponse('Image fetch failed.')    
+            
+        content_type, width, height = tm_util.getImageInfo(img_data)
+        logging.info('Img size %dx%d type %s', width, height, content_type)
+        #TODO resize?
+        img_entity = models.TopMovieImage(imdb_id=imdb_id,
+                    img_data=img_data,
+                    content_type=content_type,
+                    width = width,
+                    height = height)
+        img_entity.put()
+    except:
+        logging.warn('Unable to get cover art for %s Reason: %s', str(imdb_movie), str(sys.exc_info()[1])) 
+          
+    return HttpResponse('Done.')
+
+def get_movie_trailer(request):
+    if 'imdb_id' not in request.REQUEST:
+        return HttpResponseServerError('Unable to load movie poster')
+    imdb_id = request.REQUEST['imdb_id']
+        
+    movie = models.TopMovie.all().filter('imdb_id = ', imdb_id).get()
+    if not movie:
+        logging.error('Unable to find movie entity for imdb id %s', imdb_id)
+        return HttpResponse('Unable to find movie.')
+        
+    logging.info('Searching for youtube trailer for movie %s', movie.title)
+    client = gdata.youtube.service.YouTubeService()
+    query = gdata.youtube.service.YouTubeVideoQuery()
+    query.vq = '%s trailer' % (movie.title)
+    #query.orderby = 'viewCount'
+    query.max_results = '1'
+    feed = client.YouTubeQuery(query)
+    
+    if feed.entry:
+        for entry in feed.entry:
+            logging.info('Found youtube trailer: ' + entry.GetSwfUrl())
+            movie.youtube_url = entry.GetSwfUrl()
+            break
+        movie.put()
+    else:
+        logging.error('No youtube trailer found for movie %s', movie.title)
+        
+    return HttpResponse('Done.')
     
 def get_movie_details(raw_name):
     """Uses regex to extract a movies name and year from a torrent files name"""
@@ -160,7 +241,7 @@ def get_movie_details(raw_name):
         return None, None
     movie_name = match.group(0)
     
-    #logging.debug('Left over: %s', clean_name[len(movie_name):])
+    #logging.info('Left over: %s', clean_name[len(movie_name):])
     year_match = year_pattern.search(clean_name[len(movie_name):])
     movie_year = None
     if year_match:
@@ -171,12 +252,13 @@ def get_movie_details(raw_name):
 def refresh_movie_category_reduce(request):    
     if 'category' not in request.REQUEST:
         return HttpResponseServerError('No category specified in request params')
+    logging.info('Refresh movie reduce for %s', request.REQUEST['category'])
         
     category = models.MovieCategory.all().filter('name = ', request.REQUEST['category']).get()
     if not category:
         logging.error('Unable to find Category %s', request.REQUEST['category'])
         return HttpResponse('Error unable to find Category')
-    logging.debug('Mapping movie %s category refresh', category.name)
+    logging.info('Mapping movie %s category refresh', category.name)
     
     #First get all active results for removal
     active_results = models.CategoryResult.all().filter('active = ', True).filter('category = ', category).fetch(100)
@@ -203,7 +285,7 @@ def refresh_movie_category_reduce(request):
     category.last_refreshed = datetime.datetime.today()
     category.put()
     
-    logging.debug('Mapped movie %s category found %d movies', category.name, movie_count)
+    logging.info('Mapped movie %s category found %d movies', category.name, movie_count)
     return HttpResponse("Done. %d results for category %s" % (movie_count, category.name))
     
     
