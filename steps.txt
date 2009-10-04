@@ -28,6 +28,16 @@
 * get youtube trailer
 * install gdata -> used http://code.google.com/p/hello-youtube/downloads/detail?name=02_hello_python_client_library_v3.zip
 * copied http://code.google.com/p/hello-youtube/source/browse/trunk/03_hello_youtube_search_query/main.py
+* unicode gotcha on youtube search query -> added u
+* fix movie name regex, split year & type regex
+* frontend - prepare divs for Carousel
+
+TODO
+* front end
+* fix movie details regex - find first group and then use that to get the index?
+* fix youtube url, need to handle non embeddable clips
+* pythonic -> http://tomayko.com/writings/cleanest-python-find-in-list-function
+* change yql to xml? add xpath to cat?
 
 OTHER POINTS
 * mac ports to sort python?
