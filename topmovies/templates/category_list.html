@@ -1,16 +1,62 @@
 {% extends 'movie_base.html' %}
 
+{% block headblock %}
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/container/assets/skins/sam/container.css" />
+
+<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/container/container-min.js"></script>
+<script src="http://yui.yahooapis.com/2.8.0r4/build/selector/selector-min.js"></script>
+{% endblock headblock %}
+
 {% block content %}
 	<h1>{{ category.name|capfirst }}</h1>
 	
 	{% if movies %}
 		{% for movie in movies %}
-			<div style="float: left;padding: 5px; min-height:200px;" align="center">
-				<a href="http://www.imdb.com/title/tt{{movie.movie.imdb_id}}">{{movie.movie.title}} ({{movie.movie.year}})</a><br/>
-				<img src="/movie/{{movie.movie.imdb_id}}.jpg" style="padding:3px;"/>
+			<div class="movieWrapperDiv">
+				<div class="movieTitle">
+					<a href="http://www.imdb.com/title/tt{{ movie.movie.imdb_id }}">
+						{{ movie.movie.title }}
+					</a>
+				</div>
+				<div class="movieYear">
+					{{ movie.movie.year }}
+				</div>
+				<div class="moviePosterDiv">
+					{% if movie.movie.youtube_url %}
+						<a href="{{ movie.movie.youtube_url }}">
+							<img src="/movie/{{movie.movie.imdb_id}}.jpg" class="hasTrailer"/>
+						</a>
+					{% else %}
+						<img src="/movie/{{ movie.movie.imdb_id }}.jpg" class="noTrailer"/>
+					{% endif %}
+				</div>
+				{% if movie.movie.youtube_url %}
+					<div class="youtubeLink">
+						<img src="{{ MEDIA_URL }}topmovies/youtube_icon.png"/>
+					</div>
+				{% endif %}
+				<div class="imdbLink">
+					<a href="http://www.imdb.com/title/tt{{ movie.movie.imdb_id }}">
+						<img src="{{ MEDIA_URL }}topmovies/imdb_icon.png"/>
+					</a>
+				</div>
+				<div class="customLink">
+					<img src="{{ MEDIA_URL }}topmovies/custom_icon.png"/>
+				</div>				
 			</div>
 		{% endfor %}
 	{% else %}
 		No Movies
 	{% endif %}
+	
+	<script>
+		function initToolTips() {
+		    var noTrailerNodes = YAHOO.util.Selector.query("img[class~='noTrailer']");
+		    var noTrailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:noTrailerNodes, text:"No trailer available" });
+		
+		    var trailerNodes = YAHOO.util.Selector.query("img[class~='hasTrailer']");
+		    var trailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:trailerNodes, text:"Click to view trailer" });		
+		}
+		YAHOO.util.Event.onDOMReady(initToolTips);
+	</script>
 {% endblock content %}
