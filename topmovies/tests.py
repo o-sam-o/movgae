@@ -18,6 +18,8 @@ class MovieNameExtractionTest(unittest.TestCase):
         self.movieDetailsTest('The Ugly Truth DVDSCR XViD-CAMELOT-[tracker BTARENA org]', 'The Ugly Truth', None)
         self.movieDetailsTest('Imagine That BDRip XviD-DASH-[tracker BTARENA org]', 'Imagine That', None)
         self.movieDetailsTest('Surrogates CAM XviD-IMAGiNE', 'Surrogates', None)
+        self.movieDetailsTest('Star Trek (DVDRip) XviD-iMBT[RLSLOG.IN]', 'Star Trek', None)
+        self.movieDetailsTest('Star Trek DVDRip XviD-iMBT 1080p [RLSLOG.IN]', 'Star Trek', None)
         
     def testCaseSensitive(self):
         #Case check

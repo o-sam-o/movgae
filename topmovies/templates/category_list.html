@@ -1,21 +1,57 @@
 {% extends 'movie_base.html' %}
+{% load string_length %}
 
 {% block headblock %}
 <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/container/assets/skins/sam/container.css" />
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/carousel/assets/skins/sam/carousel.css"> 
 
+<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/element/element-min.js"></script> 
 <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/container/container-min.js"></script>
 <script src="http://yui.yahooapis.com/2.8.0r4/build/selector/selector-min.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/animation/animation-min.js"></script> 
+<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/carousel/carousel-min.js"></script> 
+
+<style>
+	#movieCarousel {
+	    margin: 0 auto;
+	}
+
+	/* Always be sure to give your carousel items a width and a height */
+	.yui-carousel-element li {
+	    width: 170px;
+	    height: 205px;
+		margin: 5px;
+	}
+
+	.yui-carousel-element .yui-carousel-item-selected {
+	    border:1px solid #CCCCCC;
+	    width: 170px;
+	    height: 205px;
+		margin: 5px;	
+	}
+</style>
+
 {% endblock headblock %}
 
 {% block content %}
 	<h1>{{ category.name|capfirst }}</h1>
 	
 	{% if movies %}
+		<div id="movieCarousel"><ol id="carousel"> 
 		{% for movie in movies %}
-			<div class="movieWrapperDiv">
+			<li>
+				<div class="movieWrapperDiv">
 				<div class="movieTitle">
 					<a href="http://www.imdb.com/title/tt{{ movie.movie.imdb_id }}">
-						{{ movie.movie.title }}
+						{% if movie.movie.title|length_greater_than:23 %}
+							<span id="title-{{ movie.movie.key }}">{{ movie.movie.title|slice:":20" }}...</span>
+							<script>
+								new YAHOO.widget.Tooltip("tt-{{ movie.movie.key }}", 
+									{ context:"title-{{ movie.movie.key }}", text:"{{ movie.movie.title }}" });
+							</script>
+						{% else %}
+							{{ movie.movie.title }}
+						{% endif %}
 					</a>
 				</div>
 				<div class="movieYear">
@@ -24,7 +60,7 @@
 				<div class="moviePosterDiv">
 					{% if movie.movie.youtube_url %}
 						<a href="{{ movie.movie.youtube_url }}">
-							<img src="/movie/{{movie.movie.imdb_id}}.jpg" class="hasTrailer"/>
+							<img src="/movie/{{ movie.movie.imdb_id }}.jpg" class="hasTrailer"/>
 						</a>
 					{% else %}
 						<img src="/movie/{{ movie.movie.imdb_id }}.jpg" class="noTrailer"/>
@@ -32,7 +68,9 @@
 				</div>
 				{% if movie.movie.youtube_url %}
 					<div class="youtubeLink">
-						<img src="{{ MEDIA_URL }}topmovies/youtube_icon.png"/>
+						<a href="{{ movie.movie.youtube_url }}">
+							<img src="{{ MEDIA_URL }}topmovies/youtube_icon.png"/>
+						</a>
 					</div>
 				{% endif %}
 				<div class="imdbLink">
@@ -42,9 +80,11 @@
 				</div>
 				<div class="customLink">
 					<img src="{{ MEDIA_URL }}topmovies/custom_icon.png"/>
-				</div>				
-			</div>
+				</div>	
+				</div>			
+			</li>
 		{% endfor %}
+		</ol></div>
 	{% else %}
 		No Movies
 	{% endif %}
@@ -55,7 +95,11 @@
 		    var noTrailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:noTrailerNodes, text:"No trailer available" });
 		
 		    var trailerNodes = YAHOO.util.Selector.query("img[class~='hasTrailer']");
-		    var trailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:trailerNodes, text:"Click to view trailer" });		
+		    var trailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:trailerNodes, text:"Click to view trailer" });
+		
+			var carousel = new YAHOO.widget.Carousel("movieCarousel", {animation: { speed: 0.5 }, numVisible: [4, 2] });
+			carousel.render();
+			carousel.show();			
 		}
 		YAHOO.util.Event.onDOMReady(initToolTips);
 	</script>

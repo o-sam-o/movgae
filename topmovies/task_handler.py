@@ -209,24 +209,32 @@ def get_movie_trailer(request):
         logging.error('Unable to find movie entity for imdb id %s', imdb_id)
         return HttpResponse('Unable to find movie.')
         
-    logging.info('Searching for youtube trailer for movie %s', movie.title)
+    logging.info('Searching for youtube trailer for movie %s [%s]', movie.title, imdb_id)
+    #FIXME, youtube search seems to fail within non ascii movie names
+    if not is_ascii(movie.title):
+        logging.error('Unable to search for movie trailer as non ascii title %s', movie.title)
+        return HttpResponse('Fail. Non ascii title')
     client = gdata.youtube.service.YouTubeService()
     query = gdata.youtube.service.YouTubeVideoQuery()
-    query.vq = u'%s trailer' % (movie.title)
+    query.vq = '%s trailer' % (movie.title)
     #query.orderby = 'viewCount'
     query.max_results = '1'
     feed = client.YouTubeQuery(query)
     
+    #TODO update to find embeddable trailer
     if feed.entry:
         for entry in feed.entry:
-            logging.info('Found youtube trailer: %s', entry.GetSwfUrl())
-            movie.youtube_url = entry.GetSwfUrl()
+            logging.info('Found youtube trailer: %s', entry.media.player.url)
+            movie.youtube_url = entry.media.player.url
             break
         movie.put()
     else:
         logging.error('No youtube trailer found for movie %s', movie.title)
         
     return HttpResponse('Done.')
+
+def is_ascii(s):
+    return all(ord(c) < 128 for c in s)
     
 def get_movie_details(raw_name):
     """Uses regex to extract a movies name and year from a torrent files name"""
@@ -235,10 +243,8 @@ def get_movie_details(raw_name):
     clean_name = replace_pattern.sub(' ', raw_name)
     
     torrent_types = ['1080p', '720p', 'DVDRip', 'R5', 'DVDSCR', 'BDRip', '\\s+CAM']
-    
-    name_type_pattern = re.compile('[^\\(\\[]+(?=(' + '|'.join(torrent_types) + '))', re.IGNORECASE)
-    #Note: ensure no p after digitals as otherwise can hit 1080p by mistake
-    name_year_pattern = re.compile(r'[^\(\[]+(?=(\(\d{4}\)|\[\d{4}\]|\d{4}[^p]+))')
+    name_type_pattern = re.compile(r'[^\(\[]+(?=(\(?\[?(' + '|'.join(torrent_types) + r')\)?\]?))', re.IGNORECASE)
+    name_year_pattern = re.compile(r'[^\(\[]+(?=(\(?\[?\d{4}\)?\]?))')
 
     #Combining year and type into a single pattern doesnt seem to work as some torrent names
     #have year then type and combined pattern seems to include the year as part of the name
