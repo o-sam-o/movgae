@@ -3,6 +3,11 @@ h1, h1 a, h2, h2 a, h4 {
 	color: #414141;
 }
 
+.movieCarouselWrapper{
+    float: left;
+    margin-bottom:10px;
+}
+
 .movieWrapperDiv {
     width: 160px;
     height: 195px;    
@@ -30,7 +35,7 @@ h1, h1 a, h2, h2 a, h4 {
 
 .moviePosterDiv {
     position: absolute;
-    top: 30px;
+    top: 32px;
     right: 35px;
     float: right;
 }
@@ -51,4 +56,28 @@ h1, h1 a, h2, h2 a, h4 {
     position: absolute;
     bottom: 3px;
     right: 5px;    
+}
+
+.fakeLink {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.hidden {
+    visibility:hidden;
+}
+
+#customLinkConfigWrapper {
+    text-align: right;
+    padding-top: 3px;
+    padding-right: 3px;
+}
+
+#customLinkConfig {
+    font-style:italic;
+    font-size: 0.8em;
+}
+
+.tm-formLabel {
+   font-weight: bold;
 }

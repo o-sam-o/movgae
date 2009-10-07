@@ -216,12 +216,13 @@ def get_movie_trailer(request):
         return HttpResponse('Fail. Non ascii title')
     client = gdata.youtube.service.YouTubeService()
     query = gdata.youtube.service.YouTubeVideoQuery()
+    #We only want videos we can embeded
+    query.format = '5'
     query.vq = '%s trailer' % (movie.title)
     #query.orderby = 'viewCount'
     query.max_results = '1'
     feed = client.YouTubeQuery(query)
     
-    #TODO update to find embeddable trailer
     if feed.entry:
         for entry in feed.entry:
             logging.info('Found youtube trailer: %s', entry.media.player.url)

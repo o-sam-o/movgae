@@ -1,39 +1,127 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
 <head>
-	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<title>
-	    Movgae
-	</title>
+  <title>Movgae</title>
 
-    <link href="{{ MEDIA_URL }}movie_style.css" rel="stylesheet" type="text/css" media="screen" />
+ <link href="{{ MEDIA_URL }}topmovies/theme/style.css" rel="stylesheet" type="text/css" media="screen" />
+ <link href="{{ MEDIA_URL }}topmovies/theme/options/header-default.css" rel="stylesheet" type="text/css" media="screen" />
+ <link href="{{ MEDIA_URL }}topmovies/theme/options/content-default.css" rel="stylesheet" type="text/css" media="screen" />
 
-	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/reset/reset-min.css"> 
-	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/base/base-min.css"> 
-	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/fonts/fonts-min.css" />
+  <!--[if lte IE 6]>
+   <style type="text/css" media="all">@import "ie6.css";</style>
+  <![endif]-->
 
-	<script src="http://yui.yahooapis.com/2.8.0r4/build/yahoo/yahoo-min.js"></script>
-	<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/yahoo-dom-event/yahoo-dom-event.js"></script> 
-	<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/logger/logger-min.js"></script> 
+ <script src="{{ MEDIA_URL }}topmovies/theme/js/jquery.js" type="text/javascript"></script>
+ <script src="{{ MEDIA_URL }}topmovies/theme/js/arclite.js" type="text/javascript"></script>
 
-    {% block headblock %}
-    
-    {% endblock headblock %}
+ <link href="{{ MEDIA_URL }}movie_style.css" rel="stylesheet" type="text/css" media="screen" />
+
+ <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/fonts/fonts-min.css" />
+
+ <script src="http://yui.yahooapis.com/2.8.0r4/build/yahoo/yahoo-min.js"></script>
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/yahoo-dom-event/yahoo-dom-event.js"></script> 
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/logger/logger-min.js"></script> 
+
+ {% block headblock %}
+ 
+ {% endblock headblock %}
+
+ <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 </head>
+
+
 <body class="yui-skin-sam">
-	{% block content %}
-    
-    
-	{% endblock content %}
+ <!-- page -->
+ <div id="page">
 	
-    <script>
-        //Enable debug to console
-        YAHOO.widget.Logger.enableBrowserConsole(); 
-    </script>
+  <div id="header-wrap">
+   <div id="header" class="block-content">
+     <div id="pagetitle">
+      <h1 class="logo"><a href="/">Movgae</a></h1>
+      <h4>The movies the internet is watching</h4>
+      <div class="clear"></div>
 
-    {% block docend %}
+     </div>
 
-    {% endblock docend %}
+     <!-- main navigation -->
+     <div id="nav-wrap1">
+      <div id="nav-wrap2">
+        <ul id="nav">
+         <li><a href="/" class="fadeThis"><span>Home</span></a></li>
+         <li><a href="/categories" class="fadeThis"><span>Categories</span></a>
+           <ul>
+            <li><a href="/action" class="fadeThis"><span>Action</span></a></li>
+            <li><a href="/comedy" class="fadeThis"><span>Comedy</span></a></li>
+            <li><a href="/drama" class="fadeThis"><span>Drama</span></a></li>
+           </ul>
+         </li>
+		{% if user.is_staff %}
+	         <li><a href="/admin" class="fadeThis"><span>Admin</span></a>
+	           <ul>
+	            <li><a href="/admin/topmovies/moviecategory/" class="fadeThis"><span>Categories</span></a></li>
+	            <li><a href="/admin/topmovies/getmoviefailure/" class="fadeThis"><span>Failures</span></a></li>
+	            <li><a href="/admin/topmovies/topmovie/" class="fadeThis"><span>Movies</span></a></li>
+	           </ul>
+	         </li>
+		{% endif %}
+         <li><a href="/about" class="fadeThis"><span>About</span></a></li>
+        </ul>
+      </div>
+     </div>
+     <!-- /main navigation -->
+
+   </div>
+	<!-- /header navigation -->
+  </div>
+
+
+
+   <div id="main-wrap1">
+    <div id="main-wrap2">
+     <div id="main" class="block-content">
+      <div class="mask-main rightdiv">
+       <div class="mask-left">
+        <div class="col1" style="width: 100%">
+          <div id="main-content">
+			{% block content %}
+
+
+			{% endblock content %}
+</div>
+	         </div>
+
+	       </div>
+	      </div>
+	      <div class="clear-content"></div>
+	     </div>
+
+
+	    </div>
+	   </div>
+
+	  </div>
+
+   <script>
+       //Enable debug to console
+       YAHOO.widget.Logger.enableBrowserConsole(); 
+   </script>
+
+	 <!-- footer -->
+	 <div id="footer">
+	  <div class="block-content">
+	     <div class="copyright">
+	       Arclite theme by <a href="http://digitalnature.ro/projects/arclite">digitalnature</a> | 
+			Validate <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
+	     </div>
+	  </div>
+	 </div>
+	 <!-- /footer -->
+
+</div>
+<!-- /page -->
 
 </body>
+
 </html>

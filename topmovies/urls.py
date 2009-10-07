@@ -9,6 +9,8 @@ urlpatterns = patterns('',
     ('^task/find/$', 'topmovies.task_handler.find_movie'),
 
     ('^movie/(?P<imdb_id>\w+).jpg$', 'topmovies.views.get_movie_image'),
+    ('^about/$', 'django.views.generic.simple.direct_to_template',
+        {'template': 'about.html'}),
     ('^(?P<category_name>\w+)/$', 'topmovies.views.movie_category'),
 
     (r'^$', 'topmovies.views.index'),

@@ -4,13 +4,21 @@
 {% block headblock %}
 <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/container/assets/skins/sam/container.css" />
 <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/carousel/assets/skins/sam/carousel.css"> 
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/button/assets/skins/sam/button.css" />
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/container/assets/skins/sam/container.css" />
 
 <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/element/element-min.js"></script> 
 <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/container/container-min.js"></script>
 <script src="http://yui.yahooapis.com/2.8.0r4/build/selector/selector-min.js"></script>
 <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/animation/animation-min.js"></script> 
 <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/carousel/carousel-min.js"></script> 
+<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/cookie/cookie-min.js"></script> 
+<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/button/button-min.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/dragdrop/dragdrop-min.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/connection/connection-min.js"></script>
 
+<script src="{{ MEDIA_URL }}topmovies/lightbox/jquery.prettyPhoto.js" type="text/javascript"></script>
+<link href="{{ MEDIA_URL }}topmovies/lightbox/prettyPhoto.css" rel="stylesheet" type="text/css" media="screen" />
 <style>
 	#movieCarousel {
 	    margin: 0 auto;
@@ -29,14 +37,20 @@
 	    height: 205px;
 		margin: 5px;	
 	}
+	
+	.yui-carousel-content {
+		background-color: white;
+	}
 </style>
 
 {% endblock headblock %}
 
 {% block content %}
-	<h1>{{ category.name|capfirst }}</h1>
-	
+<div class="post" style="padding-bottom: 30px;">
+ <div class="post-header">
+  <h1>{{ category.name|capfirst }}</h1>	
 	{% if movies %}
+		<div class="movieCarouselWrapper">
 		<div id="movieCarousel"><ol id="carousel"> 
 		{% for movie in movies %}
 			<li>
@@ -59,7 +73,7 @@
 				</div>
 				<div class="moviePosterDiv">
 					{% if movie.movie.youtube_url %}
-						<a href="{{ movie.movie.youtube_url }}">
+						<a href="{{ movie.movie.youtube_url }}" rel="prettyPhoto" title="{{ movie.movie.title }} Trailer">
 							<img src="/movie/{{ movie.movie.imdb_id }}.jpg" class="hasTrailer"/>
 						</a>
 					{% else %}
@@ -79,28 +93,116 @@
 					</a>
 				</div>
 				<div class="customLink">
-					<img src="{{ MEDIA_URL }}topmovies/custom_icon.png"/>
+					<a class="customLinkLink fakeLink" movieTitle="{{ movie.movie.title }}">
+						<img src="{{ MEDIA_URL }}topmovies/custom_icon.png"/>
+					</a>
 				</div>	
 				</div>			
 			</li>
 		{% endfor %}
 		</ol></div>
+		<div id="customLinkConfigWrapper">
+			<a id="customLinkConfig" class="fakeLink" onClick="showCustomLinkDialog()">Configure Custom Link</a>
+		</div>
+		</div>
 	{% else %}
 		No Movies
 	{% endif %}
+ </div>
+</div>
+
+<div id="customLinkDialog" class="yui-pe-content hidden">
+	<div class="hd">Custom Link Configuration</div>
+	<div class="bd">
+		<form>
+			<label for="customLink" class="tm-formLabel">Custom Link <img src="{{ MEDIA_URL }}topmovies/custom_icon.png" style="vertical-align: bottom;"/>:</label>
+			<input type="textbox" size="50" name="customLink" id="customLinkField"/>
+			<div style="padding-top: 5px;">
+				The feature allows you to configure a custom action for each movie.
+				Eg:
+				<ul style="font-style:italic;">
+					<li><b>Google Search:</b> <br/>http://www.google.com#q=%TITLE%</li>
+					<li><b>Search Amazon:</b> <br/>http://www.amazon.com/s/?field-keywords=%TITLE%</li>
+					<li><b>Search Vimeo:</b> <br/>http://www.vimeo.com/videos/search:%TITLE%</li>
+				</ul>
+			</div>
+		</form>
+	</div>
+</div>
+
 	
-	<script>
-		function initToolTips() {
-		    var noTrailerNodes = YAHOO.util.Selector.query("img[class~='noTrailer']");
-		    var noTrailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:noTrailerNodes, text:"No trailer available" });
+<script>
+	var customLinkDialog = null;
+	function initPage() {
+	    var noTrailerNodes = YAHOO.util.Selector.query("img[class~='noTrailer']");
+	    var noTrailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:noTrailerNodes, text:"No trailer available" });
+
+		//disabled as lightbox has trailer
+	    //var trailerNodes = YAHOO.util.Selector.query("img[class~='hasTrailer']");
+	    //var trailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:trailerNodes, text:"Click to view trailer" });
+
+		var carousel = new YAHOO.widget.Carousel("movieCarousel", {animation: { speed: 0.5 }, numVisible: [4, 2] });
+		carousel.render();
+		carousel.show();
 		
-		    var trailerNodes = YAHOO.util.Selector.query("img[class~='hasTrailer']");
-		    var trailerTT = new YAHOO.widget.Tooltip("noTrailerTT", { context:trailerNodes, text:"Click to view trailer" });
+		setCustomLinks();
+
+		var handleSubmit = function() {
+			var linkValue = document.getElementById('customLinkField').value;
+			if(!linkValue){
+				alert('You must enter a custom link.');
+				return;
+			}
+			YAHOO.util.Cookie.set("customLinkKey", linkValue, { expires: new Date("January 12, 2025") }); 
+			setCustomLinks();
+			this.hide();
+		};
+		var handleCancel = function() {
+			this.cancel();
+		};
 		
-			var carousel = new YAHOO.widget.Carousel("movieCarousel", {animation: { speed: 0.5 }, numVisible: [4, 2] });
-			carousel.render();
-			carousel.show();			
+		customLinkDialog = new YAHOO.widget.Dialog("customLinkDialog", 
+					{ width : "400px",
+					  fixedcenter : true,
+					  visible : false, 
+					  constraintoviewport : true,
+					  buttons : [ { text:"Submit", handler:handleSubmit, isDefault:true },
+								  { text:"Cancel", handler:handleCancel } ]
+					 } );
+		customLinkDialog.render();
+	}
+	YAHOO.util.Event.onDOMReady(initPage);
+
+	//Init lightbox for playing youtube trailers
+	jQuery(document).ready(function(){
+		jQuery("a[rel^='prettyPhoto']").prettyPhoto();
+	});	
+	
+	function setCustomLinks(){
+		var customLinkNodes = YAHOO.util.Selector.query("a[class~='customLinkLink']");
+		var customLink = YAHOO.util.Cookie.get("customLinkKey");
+		if(customLink){
+			for (var i = 0; i < customLinkNodes.length; i++){ 
+				var linkNode = customLinkNodes[i];
+				var movieTitle = linkNode.getAttribute('movieTitle');
+				YAHOO.log(customLink + ' ' + movieTitle);
+				linkNode.href = customLink.replace('%TITLE%', movieTitle);
+			}
+			//No need to display config dialog on config anymore
+			YAHOO.util.Event.removeListener(customLinkNodes, "click", showCustomLinkDialog); 
+		}else{
+			YAHOO.log("Didnt init custom link as non set"); 
+			YAHOO.util.Event.on(customLinkNodes, 'click', showCustomLinkDialog); 		
 		}
-		YAHOO.util.Event.onDOMReady(initToolTips);
-	</script>
+	}
+	
+	function showCustomLinkDialog(){
+		var customLink = YAHOO.util.Cookie.get("customLinkKey"); 
+		if(customLink){
+			document.getElementById('customLinkField').value = customLink;
+		}
+		customLinkDialog.show();
+	}	
+</script>
+
 {% endblock content %}
