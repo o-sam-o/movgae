@@ -3,6 +3,7 @@ import logging
 import re
 import sys
 import datetime
+from xml.dom import minidom 
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
@@ -50,16 +51,15 @@ def refresh_movie_category(request):
     if 'offset' in request.REQUEST:
         query_offset = int(request.REQUEST['offset'])
     form_data = urllib.urlencode({"q": category.yql + ' limit %d offset %d' % (settings.MOVIE_REFRESH_QUERY_SIZE, query_offset), 
-                                "format": "json"})
+                                "format": "xml", "diagnostics": "false"})
     result = urlfetch.fetch(url=settings.YQL_BASE_URL,payload=form_data,method=urlfetch.POST)
-    fetch_result = simplejson.loads(result.content)
+    dom = minidom.parseString(result.content) 
     
     strip_white_pattern = re.compile(r"\s+")
     cat_results = []
-    for index, raw_result in enumerate(fetch_result['query']['results']['a']):
-        if 'content' not in raw_result:
-            continue
-        raw_name = strip_white_pattern.sub(' ', raw_result['content'])
+    for index, raw_result in enumerate(dom.getElementsByTagName('results')[0].childNodes):
+        logging.debug('Node: ' + raw_result.toxml())
+        raw_name = strip_white_pattern.sub(' ', getText(raw_result.childNodes))
         logging.info('Raw Name [%s]: %s', category.name, raw_name)
         cat_results.append(models.CategoryResult(raw_movie_name=raw_name, category=category, active=False, 
                             order=(query_offset+index+1)))
@@ -76,6 +76,13 @@ def refresh_movie_category(request):
                         params={'category': category.name}, countdown=settings.MOVIE_REFRESH_REDUCE_DELAY)
         
     return HttpResponse("Generated CategoryResult for %s." % (category.name))
+
+def getText(nodelist):
+    rc = ""
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc = rc + node.data
+    return rc
 
 def find_movie(request):
     if 'cat_result' not in request.REQUEST:
