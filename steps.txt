@@ -31,19 +31,24 @@
 * unicode gotcha on youtube search query -> added u
 * fix movie name regex, split year & type regex
 * frontend - prepare divs for Carousel
+* custom template for truncating movie title
 * copy a wordpress theme
 * add youtube lightbox
 * configure custom link button -> ensure dialog html has hidden tag
-
+* js refactor so carousel uses ajax loading
+* about and categories page
+* template middleware to populate menu categories
 
 
 TODO
 * front end
 * fix movie details regex - find first group and then use that to get the index?
-* fix youtube url, need to handle non embeddable clips
-* pythonic -> http://tomayko.com/writings/cleanest-python-find-in-list-function
+* pythonic -> http://tomayko.com/writings/cleanest-python-find-in-list-function, using () for multilines
 * change yql to xml? add xpath to cat?
 * better way to handle css and js
+* about page -> no view
+* google analytics
 
 OTHER POINTS
 * mac ports to sort python?
+* Fail "My One And Only LiMiTED" hits Inta habibi (My One and Only Love)

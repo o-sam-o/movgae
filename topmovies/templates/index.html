@@ -1,15 +1,31 @@
 {% extends 'movie_base.html' %}
 
 {% block content %}
-	<h1>GAE Movies</h1>
+	<h1 style="margin-bottom: 0px;">GAE Movies</h1>
 	
 	{% if categories %}
-	<ul>
+		<div class="overclear">
 		{% for category in categories %}
-			<li><a href="/{{category.name}}">{{category.name|capfirst}}</a></li>
+			<div class="post" style="padding-bottom: 30px;"><div class="movieCarouselWrapper">
+				<h2><a href="/{{category.category.name}}">{{category.category.name|capfirst}}</a></h2>
+				<div id="{{ category.category.name }}MovieCarousel" class="carouselHolder" 
+					style="width: 728px; height: 252px;">
+				</div>
+			</div></div>
 		{% endfor %}
-	</ul>
+		</div>
+		<a id="customLinkConfig" class="fakeLink" onClick="showCustomLinkDialog()">Configure Custom Link</a>
+		<script>
+			{% for category in categories %}
+				var {{ category.category.name }}Carousel = new MovieCarousel("{{ category.category.name }}",
+					"{{ category.category.name }}MovieCarousel", 
+					{{ category.movie_count }}, 4, 1, "{{ MEDIA_URL }}");
+			{% endfor %}
+		</script>
 	{% else %}
 		No movie categories
 	{% endif %}
+	
+	{% include 'custom_link_dialog.html' %}
+	
 {% endblock content %}

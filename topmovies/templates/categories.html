@@ -1,0 +1,16 @@
+{% extends 'movie_base.html' %}
+
+{% block content %}
+	<h1>Categories</h1>
+	<div class="post" style="min-height: 350px;">
+		{% if categories %}
+		<ul>
+			{% for category in categories %}
+				<li><a href="/{{category.name}}">{{category.name|capfirst}}</a></li>
+			{% endfor %}
+		</ul>
+		{% else %}
+			No movie categories
+		{% endif %}
+	</div>
+{% endblock content %}

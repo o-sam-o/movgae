@@ -14,6 +14,7 @@ class MovieCategory(BaseEntity):
     yql = db.StringProperty()
     
     active = db.BooleanProperty()
+    order = db.IntegerProperty()
     last_refreshed = db.DateTimeProperty()
     
     def __unicode__(self):

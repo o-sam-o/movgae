@@ -11,6 +11,8 @@ urlpatterns = patterns('',
     ('^movie/(?P<imdb_id>\w+).jpg$', 'topmovies.views.get_movie_image'),
     ('^about/$', 'django.views.generic.simple.direct_to_template',
         {'template': 'about.html'}),
+    ('^categories/$', 'topmovies.views.categories'),
+    ('^(?P<category_name>\w+)/json/$', 'topmovies.views.get_movies_as_json'),
     ('^(?P<category_name>\w+)/$', 'topmovies.views.movie_category'),
 
     (r'^$', 'topmovies.views.index'),

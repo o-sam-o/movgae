@@ -61,7 +61,8 @@ def refresh_movie_category(request):
             continue
         raw_name = strip_white_pattern.sub(' ', raw_result['content'])
         logging.info('Raw Name [%s]: %s', category.name, raw_name)
-        cat_results.append(models.CategoryResult(raw_movie_name=raw_name, category=category, active=False, order=index))
+        cat_results.append(models.CategoryResult(raw_movie_name=raw_name, category=category, active=False, 
+                            order=(query_offset+index+1)))
     
     db.put(cat_results)
     

@@ -3,6 +3,14 @@ settings.add_app_media('movie_style.css',
     'topmovies/movie_style.css',
 )
 
+settings.add_app_media('topmovies.js',
+    'topmovies/topmovies.js',
+)
+
+settings.add_app_media('MovieCarousel.js',
+    'topmovies/MovieCarousel.js',
+)
+
 settings.add_app_media('topmovies/theme/style.css',
     'topmovies/theme/style.css',
 )

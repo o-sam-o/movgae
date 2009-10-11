@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 
 <head>
-  <title>Movgae</title>
+  <title>{% block titleblock %} Movgae {% endblock titleblock %}</title>
 
  <link href="{{ MEDIA_URL }}topmovies/theme/style.css" rel="stylesheet" type="text/css" media="screen" />
  <link href="{{ MEDIA_URL }}topmovies/theme/options/header-default.css" rel="stylesheet" type="text/css" media="screen" />
@@ -16,6 +16,7 @@
  <script src="{{ MEDIA_URL }}topmovies/theme/js/jquery.js" type="text/javascript"></script>
  <script src="{{ MEDIA_URL }}topmovies/theme/js/arclite.js" type="text/javascript"></script>
 
+ <script src="{{ MEDIA_URL }}topmovies.js" type="text/javascript"></script>
  <link href="{{ MEDIA_URL }}movie_style.css" rel="stylesheet" type="text/css" media="screen" />
 
  <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/fonts/fonts-min.css" />
@@ -24,15 +25,61 @@
  <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/yahoo-dom-event/yahoo-dom-event.js"></script> 
  <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/logger/logger-min.js"></script> 
 
+ <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/container/assets/skins/sam/container.css" />
+ <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/carousel/assets/skins/sam/carousel.css"> 
+ <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/button/assets/skins/sam/button.css" />
+ <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/container/assets/skins/sam/container.css" />
+
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/element/element-min.js"></script> 
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/container/container-min.js"></script>
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/selector/selector-min.js"></script>
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/animation/animation-min.js"></script> 
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/carousel/carousel-min.js"></script> 
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/cookie/cookie-min.js"></script> 
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/button/button-min.js"></script>
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/dragdrop/dragdrop-min.js"></script>
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/connection/connection-min.js"></script>
+ <script type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/json/json-min.js"></script> 
+
+ <script src="{{ MEDIA_URL }}MovieCarousel.js" type="text/javascript"></script>
+
+ <script src="{{ MEDIA_URL }}topmovies/lightbox/jquery.prettyPhoto.js" type="text/javascript"></script>
+ <link href="{{ MEDIA_URL }}topmovies/lightbox/prettyPhoto.css" rel="stylesheet" type="text/css" media="screen" />
+
  {% block headblock %}
  
  {% endblock headblock %}
+
+ <style type="text/css">
+	.yui-skin-sam .yui-carousel-item-loading {
+		text-indent: 0px;
+	}
+
+	/* Always be sure to give your carousel items a width and a height */
+	.yui-carousel-element li {
+	    width: 170px;
+	    height: 205px;
+		margin: 5px;
+	}
+
+	.yui-carousel-element .yui-carousel-item-selected {
+	    border:1px solid #CCCCCC;
+	    width: 170px;
+	    height: 205px;
+		margin: 5px;	
+	}
+
+	.yui-carousel-content {
+		background-color: white;
+	}
+ </style>
 
  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 </head>
 
 
 <body class="yui-skin-sam">
+	
  <!-- page -->
  <div id="page">
 	
@@ -52,9 +99,9 @@
          <li><a href="/" class="fadeThis"><span>Home</span></a></li>
          <li><a href="/categories" class="fadeThis"><span>Categories</span></a>
            <ul>
-            <li><a href="/action" class="fadeThis"><span>Action</span></a></li>
-            <li><a href="/comedy" class="fadeThis"><span>Comedy</span></a></li>
-            <li><a href="/drama" class="fadeThis"><span>Drama</span></a></li>
+			{% for category in menu_categories %}
+            	<li><a href="/{{ category.name|lower }}" class="fadeThis"><span>{{ category.name|capfirst }}</span></a></li>
+			{% endfor %}
            </ul>
          </li>
 		{% if user.is_staff %}

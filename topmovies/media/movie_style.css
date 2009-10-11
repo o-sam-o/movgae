@@ -8,6 +8,10 @@ h1, h1 a, h2, h2 a, h4 {
     margin-bottom:10px;
 }
 
+.carouselHolder{
+    margin: 0 auto;
+}
+
 .movieWrapperDiv {
     width: 160px;
     height: 195px;    
@@ -63,6 +67,11 @@ h1, h1 a, h2, h2 a, h4 {
     text-decoration: underline;
 }
 
+.overclear {
+	width: 100%;
+	overflow: hidden;
+}
+
 .hidden {
     visibility:hidden;
 }
@@ -80,4 +89,10 @@ h1, h1 a, h2, h2 a, h4 {
 
 .tm-formLabel {
    font-weight: bold;
+}
+
+#aboutDiv {
+    width: 800px; 
+    font-size: 18px;
+    text-align: justify;   
 }

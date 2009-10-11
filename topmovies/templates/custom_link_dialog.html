@@ -1,0 +1,59 @@
+<div id="customLinkDialog" class="yui-pe-content hidden">
+	<div class="hd">Custom Link Configuration</div>
+	<div class="bd">
+		<form>
+			<label for="customLink" class="tm-formLabel">Custom Link 
+				<img src="{{ MEDIA_URL }}topmovies/custom_icon.png" style="vertical-align: bottom;"/>:
+			</label>
+			<input type="textbox" size="50" name="customLink" id="customLinkField"/>
+			<div style="padding-top: 5px;">
+				The feature allows you to configure a custom action for each movie.
+				Eg:
+				<ul style="font-style:italic;">
+					<li><b>Google Search:</b> <br/>http://www.google.com#q=%TITLE%</li>
+					<li><b>Search Amazon:</b> <br/>http://www.amazon.com/s/?field-keywords=%TITLE%</li>
+					<li><b>Search Vimeo:</b> <br/>http://www.vimeo.com/videos/search:%TITLE%</li>
+				</ul>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script>
+	var customLinkDialog = null;
+	
+	function initCustomLinkDialog(){
+		var handleSubmit = function() {
+			var linkValue = document.getElementById('customLinkField').value;
+			if(!linkValue){
+				alert('You must enter a custom link.');
+				return;
+			}
+			YAHOO.util.Cookie.set("customLinkKey", linkValue, { expires: new Date("January 12, 2025"), path: "/" }); 
+			setCustomLinks();
+			this.hide();
+		};
+		var handleCancel = function() {
+			this.cancel();
+		};
+		
+		customLinkDialog = new YAHOO.widget.Dialog("customLinkDialog", 
+					{ width : "400px",
+					  fixedcenter : true,
+					  visible : false, 
+					  constraintoviewport : true,
+					  buttons : [ { text:"Submit", handler:handleSubmit, isDefault:true },
+								  { text:"Cancel", handler:handleCancel } ]
+					 } );
+		customLinkDialog.render();		
+	}
+	YAHOO.util.Event.onDOMReady(initCustomLinkDialog);
+	
+	function showCustomLinkDialog(){
+		var customLink = YAHOO.util.Cookie.get("customLinkKey"); 
+		if(customLink){
+			document.getElementById('customLinkField').value = customLink;
+		}
+		customLinkDialog.show();
+	}	
+</script>
