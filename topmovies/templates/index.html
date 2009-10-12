@@ -6,10 +6,10 @@
 	{% if categories %}
 		<div class="overclear">
 		{% for category in categories %}
-			<div class="post" style="padding-bottom: 30px;"><div class="movieCarouselWrapper">
+			<div class="post" style="padding-bottom: 30px;clear:left;"><div class="movieCarouselWrapper">
 				<h2><a href="/{{category.category.name}}">{{category.category.name|capfirst}}</a></h2>
 				<div id="{{ category.category.name }}MovieCarousel" class="carouselHolder" 
-					style="width: 728px; height: 252px;">
+					style="width: 728px; height: 252px;float: left;">
 				</div>
 			</div></div>
 		{% endfor %}

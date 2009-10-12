@@ -17,20 +17,20 @@ indexes:
   - name: action_time
     direction: desc
 
-# Used 616 times in query history.
+# Used 733 times in query history.
 - kind: topmovies_categoryresult
   properties:
   - name: active
   - name: category
   - name: order
 
-# Used 15 times in query history.
+# Used 27 times in query history.
 - kind: topmovies_moviecategory
   properties:
   - name: active
   - name: name
 
-# Used 5 times in query history.
+# Used 35 times in query history.
 - kind: topmovies_moviecategory
   properties:
   - name: active

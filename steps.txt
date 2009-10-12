@@ -38,16 +38,16 @@
 * js refactor so carousel uses ajax loading
 * about and categories page
 * template middleware to populate menu categories
+* fix get movie details -> use split
 
 
 TODO
-* front end
-* fix movie details regex - find first group and then use that to get the index?
 * pythonic -> http://tomayko.com/writings/cleanest-python-find-in-list-function, using () for multilines
-* change yql to xml? add xpath to cat?
 * better way to handle css and js
-* about page -> no view
 * google analytics
+* memcache
+* name
+* slide presentation
 
 OTHER POINTS
 * mac ports to sort python?

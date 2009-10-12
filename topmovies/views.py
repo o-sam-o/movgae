@@ -11,7 +11,7 @@ from topmovies import models
 def index(request):
     results = []
     #TODO add pagination or random ness
-    for category in models.MovieCategory.all().filter('active = ', True).fetch(5):
+    for category in models.MovieCategory.all().filter('active = ', True).order('order').fetch(5):
         count = get_movie_count(category)
         if count:
             results.append({'category': category, 'movie_count': count})

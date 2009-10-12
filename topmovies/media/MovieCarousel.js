@@ -4,7 +4,7 @@ function MovieCarousel (category, container, movieCount, xSize, ySize, mediaUrl)
     
     function init(){
         carousel = new YAHOO.widget.Carousel(container, 
-                                    {animation: { speed: 0.5 }, 
+                                    {animation: { speed: 0.5, effect: YAHOO.util.Easing.easeOut }, 
 									 numVisible: [xSize, ySize],
 									 numItems: movieCount});
 		carousel.on("loadItems", getMovies);
@@ -65,15 +65,21 @@ function MovieCarousel (category, container, movieCount, xSize, ySize, mediaUrl)
 		return movieNode;
     }
 
-    function getMovies() {                
-        YAHOO.util.Connect.asyncRequest("GET", "/" + category + "/json/?offset="+offset+"&pageSize=" + (xSize*ySize),
+    function getMovies(o) {
+        var pageSize = xSize * ySize;
+        //Handle jumping multiple pages
+        if(o){
+            //YAHOO.log('Num: ' + o.num + " First: " + o.first + " Last: " + o.last);   
+            pageSize = o.num;
+        }  
+        YAHOO.util.Connect.asyncRequest("GET", "/" + category + "/json/?offset="+offset+"&pageSize=" + pageSize,
                 {
                     success: function (o) {
                         var results = YAHOO.lang.JSON.parse(o.responseText);
                             
                         for (var i = 0; i < results.length; i++){ 
                             var movieDetails = results[i];
-                            YAHOO.log('Got Movie: ' + movieDetails.title);
+                            YAHOO.log('Got Movie[' + category + ']: ' + movieDetails.title);
                 			carousel.addItem(getMovieNode(movieDetails));
                 			//Update order which is used for pagination
                 			if(movieDetails.order > offset){
@@ -99,5 +105,4 @@ function MovieCarousel (category, container, movieCount, xSize, ySize, mediaUrl)
                     }
         });
     }
-    
 }

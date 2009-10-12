@@ -3,7 +3,7 @@ import logging
 from topmovies import models
 
 def add_categories(request):
-    categories = models.MovieCategory.all().filter('active = ', True).order('order').fetch(5)
+    categories = models.MovieCategory.all().filter('active = ', True).order('order').fetch(3)
     additions = {
             'menu_categories': categories,
             'is_prod': is_prod_env(),

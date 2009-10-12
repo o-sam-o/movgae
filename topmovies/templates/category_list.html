@@ -9,8 +9,8 @@
   <h1>{{ category.name|capfirst }}</h1>	
 	{% ifnotequal movie_count 0 %}
 		<div class="movieCarouselWrapper">
-		<div id="movieCarousel" class="carouselHolder" style="width: 728px; height: 470px;"></div>
-		<div id="customLinkConfigWrapper">
+		<div id="movieCarousel" class="carouselHolder" style="width: 728px; height: 470px;float: left;"></div>
+		<div id="customLinkConfigWrapper" style="clear:both;">
 			<a id="customLinkConfig" class="fakeLink" onClick="showCustomLinkDialog()">Configure Custom Link</a>
 		</div>
 		</div>

@@ -102,6 +102,7 @@
 			{% for category in menu_categories %}
             	<li><a href="/{{ category.name|lower }}" class="fadeThis"><span>{{ category.name|capfirst }}</span></a></li>
 			{% endfor %}
+			<li><a href="/categories" class="fadeThis"><span>Show All</span></a></li>
            </ul>
          </li>
 		{% if user.is_staff %}
@@ -159,8 +160,13 @@
 	 <div id="footer">
 	  <div class="block-content">
 	     <div class="copyright">
-	       Arclite theme by <a href="http://digitalnature.ro/projects/arclite">digitalnature</a> | 
-			Validate <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
+			This site was developed by <a href="mailto:cavenaghweb@hotmail.com">Sam Cavenagh</a> |
+			Arclite theme by <a href="http://digitalnature.ro/projects/arclite">digitalnature</a>
+			{% if is_prod %}
+				
+			{% else %}
+				| Dev Server
+			{% endif %}
 	     </div>
 	  </div>
 	 </div>

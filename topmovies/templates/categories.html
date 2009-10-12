@@ -6,7 +6,7 @@
 		{% if categories %}
 		<ul>
 			{% for category in categories %}
-				<li><a href="/{{category.name}}">{{category.name|capfirst}}</a></li>
+				<li><h6><a href="/{{category.name}}">{{category.name|capfirst}}</a></h6></li>
 			{% endfor %}
 		</ul>
 		{% else %}
