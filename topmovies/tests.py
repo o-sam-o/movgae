@@ -11,6 +11,7 @@ class MovieNameExtractionTest(unittest.TestCase):
         self.movieDetailsTest('Star.Trek [2009] DvDRip-', 'Star Trek', 2009)
         self.movieDetailsTest('District.9.2009.iTALiAN.MD.R5.XviD-SiLENT[UltimaFrontiera]', 'District 9', 2009)
         self.movieDetailsTest('GI Joe The Rise Of Cobra 2009 DvdRip Xvid {1337x}-Noir', 'GI Joe The Rise Of Cobra', 2009)
+        self.movieDetailsTest('Final Engagement 2009 FRENCH DVDRIP XVID-BN DIV ', 'Final Engagement', 2009)
     
     def testMovieQuality(self):    
         self.movieDetailsTest('Star Trek DVDRip XviD-iMBT[RLSLOG.IN]', 'Star Trek', None)
@@ -18,9 +19,9 @@ class MovieNameExtractionTest(unittest.TestCase):
         self.movieDetailsTest('The Ugly Truth DVDSCR XViD-CAMELOT-[tracker BTARENA org]', 'The Ugly Truth', None)
         self.movieDetailsTest('Imagine That BDRip XviD-DASH-[tracker BTARENA org]', 'Imagine That', None)
         self.movieDetailsTest('Surrogates CAM XviD-IMAGiNE', 'Surrogates', None)
-        self.movieDetailsTest('My One And Only LiMiTED DVDSCR XviD-ARROW avi', 'My One And Only', None)
         self.movieDetailsTest('Star Trek (DVDRip) XviD-iMBT[RLSLOG.IN]', 'Star Trek', None)
         self.movieDetailsTest('Star Trek DVDRip XviD-iMBT 1080p [RLSLOG.IN]', 'Star Trek', None)
+        self.movieDetailsTest('Zombieland TS XVID-IMAGiNE', 'Zombieland', None) 
         
     def testCaseSensitive(self):
         #Case check
@@ -36,6 +37,10 @@ class MovieNameExtractionTest(unittest.TestCase):
     def testNoMatch(self):
         #No hit
         self.movieDetailsTest('No Match', None, None)
+        
+    def testlimitedInName(self):
+        self.movieDetailsTest('My One And Only LiMiTED DVDSCR XviD-ARROW avi', 'My One And Only', None)
+        self.movieDetailsTest('The Darjeeling Limited (2007) NTSC DVDR [www.ilovetorrents.com]', 'The Darjeeling Limited', 2007)
         
     def movieDetailsTest(self, raw_name, expected_name, expected_year):
         name, year = task_handler.get_movie_details(raw_name)

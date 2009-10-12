@@ -251,31 +251,15 @@ def get_movie_details(raw_name):
     replace_pattern = re.compile(r"\.")
     clean_name = replace_pattern.sub(' ', raw_name)
     
-    torrent_types = ['1080p', '720p', 'DVDRip', 'R5', 'DVDSCR', 'BDRip', '\\s+CAM']
-    name_type_pattern = re.compile(r'[^\(\[]+(?=(\(?\[?(' + '|'.join(torrent_types) + r')\)?\]?))', re.IGNORECASE)
-    name_year_pattern = re.compile(r'[^\(\[]+(?=(\(?\[?\d{4}\)?\]?))')
-
-    #Combining year and type into a single pattern doesnt seem to work as some torrent names
-    #have year then type and combined pattern seems to include the year as part of the name
-    name_type_match = name_type_pattern.match(clean_name)
-    name_year_match = name_year_pattern.match(clean_name)
-    
-    movie_name = None
-    if not name_type_match and not name_year_match:
+    torrent_types = ['1080p', '\\d{4}[^p]', '720p', 'DVDRip', 'R5', 'DVDSCR', 'BDRip', '\\s+CAM', '\\sTS\\s']
+    name_pattern = re.compile(r'((LiMiTED\s*)?\(?\[?(' + '|'.join(torrent_types) + r')\)?\]?)', re.IGNORECASE)   
+    name_match = name_pattern.split(clean_name)
+    if not name_match:
         return None, None
-    elif not name_type_match:
-        movie_name = name_year_match.group(0)
-    elif not name_year_match:
-        movie_name = name_type_match.group(0)
-    else:
-        year_movie_name = name_year_match.group(0)
-        type_movie_name = name_type_match.group(0)
-        logging.debug('Year: "%s" Type: "%s"', year_movie_name, type_movie_name)
-        #We want to shortest one as the longer one will contain the year or type and we only want the name
-        if len(year_movie_name) < len(type_movie_name):
-            movie_name = year_movie_name
-        else:
-            movie_name = type_movie_name
+    movie_name = name_match[0]
+    #If we didnt take anything out of the name than there wasnt a match
+    if movie_name == clean_name:
+        return None, None
             
     #Check for p so we dont hit 1080p
     year_pattern = re.compile(r'\d{4}(?=[^p])')
