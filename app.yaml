@@ -1,5 +1,5 @@
-﻿application: refeeder
-version: 1
+﻿application: filmcloud
+version: beta-1
 runtime: python
 api_version: 1
 

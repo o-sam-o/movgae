@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 
 <head>
-  <title>{% block titleblock %} Movgae {% endblock titleblock %}</title>
+  <title>{% block titleblock %} Film Cloud - Social Movie Recommendations{% endblock titleblock %}</title>
 
  <link href="{{ MEDIA_URL }}topmovies/theme/style.css" rel="stylesheet" type="text/css" media="screen" />
  <link href="{{ MEDIA_URL }}topmovies/theme/options/header-default.css" rel="stylesheet" type="text/css" media="screen" />
@@ -86,7 +86,7 @@
   <div id="header-wrap">
    <div id="header" class="block-content">
      <div id="pagetitle">
-      <h1 class="logo"><a href="/">Movgae</a></h1>
+      <h1 class="logo"><a href="/">Film Cloud</a></h1>
       <h4>The movies the internet is watching</h4>
       <div class="clear"></div>
 
@@ -154,6 +154,10 @@
    <script>
        //Enable debug to console
        YAHOO.widget.Logger.enableBrowserConsole(); 
+	   var showEditLink = false;
+	   {% if request.GET.showEditLink %}
+			showEditLink = true;
+	   {% endif %}
    </script>
 
 	 <!-- footer -->
@@ -163,7 +167,16 @@
 			This site was developed by <a href="mailto:cavenaghweb@hotmail.com">Sam Cavenagh</a> |
 			Arclite theme by <a href="http://digitalnature.ro/projects/arclite">digitalnature</a>
 			{% if is_prod %}
-				
+				<script type="text/javascript">
+					var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+					document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+				</script>
+				<script type="text/javascript">
+					try {
+						var pageTracker = _gat._getTracker("UA-6933374-3");
+						pageTracker._trackPageview();
+					} catch(err) {}
+				</script>
 			{% else %}
 				| Dev Server
 			{% endif %}

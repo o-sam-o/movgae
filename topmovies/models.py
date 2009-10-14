@@ -30,7 +30,9 @@ class TopMovie(BaseEntity):
     
     imdb_id = db.StringProperty()
     youtube_url = db.LinkProperty()
+    has_image = db.BooleanProperty()
     
+    active = db.BooleanProperty()
     last_refreshed = db.DateTimeProperty(auto_now_add=True)
     
     def __unicode__(self):
@@ -43,7 +45,7 @@ class TopMovie(BaseEntity):
             self.other_titles = []
         if self.title not in self.other_titles:
             self.other_titles.append(self.title)
-            
+        
         return db.Model.put(self)
 
 

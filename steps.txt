@@ -39,14 +39,13 @@
 * about and categories page
 * template middleware to populate menu categories
 * fix get movie details -> use split
+* key_name in TopMovie to prevent duplicates
 
 
 TODO
 * pythonic -> http://tomayko.com/writings/cleanest-python-find-in-list-function, using () for multilines
 * better way to handle css and js
-* google analytics
 * memcache
-* name
 * slide presentation
 
 OTHER POINTS

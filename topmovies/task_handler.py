@@ -12,6 +12,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseServerError
 from django.utils import simplejson
 from django.core.urlresolvers import reverse
+from django.template.defaultfilters import slugify
 
 from imdb import IMDb
 
@@ -137,10 +138,14 @@ def find_movie(request):
             cat_result.movie = existing_movie
         else:
             logging.info('Adding new movie %s', result_movie['title'])
-            movie_entity = models.TopMovie(title=result_movie['title'],
+            #Use slugged movie title and year as key to prevent duplicates
+            movie_entity = models.TopMovie(key_name=slugify('%s %d' % (result_movie['title'], result_movie['year'])),
+                                title=result_movie['title'],
                                 year=result_movie['year'],
                                 imdb_id=result_movie.movieID,
-                                other_names=[movie_name])
+                                other_names=[movie_name],
+                                active=True,
+                                has_image=False)
             movie_entity.put()   
             cat_result.movie = movie_entity
             #Schedule task to download a thumbnail image and try to find a trailer on youtube
@@ -168,6 +173,7 @@ def get_movie_image(request):
     movie_image = models.TopMovieImage.all().filter('imdb_id =', imdb_id).get()
     if movie_image:
         logging.info('image entity already exists for %s', imdb_id)
+        mark_has_image(imdb_id, True)
         return HttpResponse('Movie already exists')
     logging.info('Get movie image for imdb id %s', imdb_id)
     retries = 0
@@ -202,10 +208,19 @@ def get_movie_image(request):
                     width = width,
                     height = height)
         img_entity.put()
+        mark_has_image(imdb_id, True)
     except:
         logging.warn('Unable to get cover art for %s Reason: %s', str(imdb_movie), str(sys.exc_info()[1])) 
           
     return HttpResponse('Done.')
+
+def mark_has_image(imdb_id, has_image):
+    movies = []
+    for movie in models.TopMovie.all().filter('imdb_id =', imdb_id):
+        movie.has_image = has_image
+        movies.append(movie)
+    db.put(movies)
+    
 
 def get_movie_trailer(request):
     if 'imdb_id' not in request.REQUEST:

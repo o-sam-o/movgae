@@ -43,6 +43,13 @@ function MovieCarousel (category, container, movieCount, xSize, ySize, mediaUrl)
 		movieNode = movieNode + "<img src=\"/movie/" + movieDetails.imdb_id + ".jpg\" class=\"noTrailer\"/>";
 	    }
 		movieNode = movieNode + "</div>";
+		if (showEditLink){
+		movieNode = movieNode + "	<div class=\"editLink\">"+
+		"		<a href=\"/admin/topmovies/topmovie/" + movieDetails.key + "\">"+
+		"			<img src=\"" + mediaUrl + "topmovies/edit_icon.png\"/>"+
+		"		</a>"+
+		"	</div>";
+	    }		
 		if (movieDetails.youtube_url){
 		movieNode = movieNode + "	<div class=\"youtubeLink\">"+
 		"		<a href=\"" + movieDetails.youtube_url + "\">"+
