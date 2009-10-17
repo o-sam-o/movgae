@@ -103,7 +103,8 @@ def find_movie(request):
         #First check to see if we already have a matching movie
         existing_movie = None
         if movie_year:
-            existing_movie = models.TopMovie.all().filter('other_titles = ', movie_name).filter('year = ', movie_year).get()
+            existing_movie = (models.TopMovie.all().filter('other_titles = ', movie_name)
+                                                   .filter('year = ', movie_year).get())
         else:
             existing_movie = models.TopMovie.all().filter('other_titles = ', movie_name).get()
     
@@ -306,7 +307,7 @@ def refresh_movie_category_reduce(request):
     for cat_result in models.CategoryResult.all().filter('active = ', False).filter('category = ', category):
         if not cat_result.movie:
             continue
-        elif cat_result.movie in movies:
+        elif cat_result.movie in movies or not cat_result.movie.active:
             duplicate_results.append(cat_result)
         else:
             movies.append(cat_result.movie)
