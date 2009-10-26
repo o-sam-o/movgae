@@ -19,7 +19,9 @@ class MovieCategory(BaseEntity):
     
     def __unicode__(self):
         return self.name
-    
+
+    class Meta:
+        verbose_name_plural = "Movie categories"    
     
 class TopMovie(BaseEntity):
     """A single popular movie"""
