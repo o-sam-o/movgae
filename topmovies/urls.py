@@ -7,6 +7,7 @@ urlpatterns = patterns('',
     ('^task/getTrailer/$', 'topmovies.task_handler.get_movie_trailer'),
     ('^task/refresh/reduce/$', 'topmovies.task_handler.refresh_movie_category_reduce'),
     ('^task/find/$', 'topmovies.task_handler.find_movie'),
+    ('^task/retryImages/$', 'topmovies.task_handler.retry_missing_images'),
 
     ('^movie/(?P<imdb_id>\w+).jpg$', 'topmovies.views.get_movie_image'),
     ('^about/$', 'django.views.generic.simple.direct_to_template',

@@ -22,6 +22,7 @@ class MovieNameExtractionTest(unittest.TestCase):
         self.movieDetailsTest('Star Trek (DVDRip) XviD-iMBT[RLSLOG.IN]', 'Star Trek', None)
         self.movieDetailsTest('Star Trek DVDRip XviD-iMBT 1080p [RLSLOG.IN]', 'Star Trek', None)
         self.movieDetailsTest('Zombieland TS XVID-IMAGiNE', 'Zombieland', None) 
+        self.movieDetailsTest('Inglourious Basterds PPV XViD-IMAGiNE', 'Inglourious Basterds', None) 
         
     def testCaseSensitive(self):
         #Case check

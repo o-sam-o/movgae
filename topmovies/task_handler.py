@@ -221,7 +221,23 @@ def mark_has_image(imdb_id, has_image):
         movie.has_image = has_image
         movies.append(movie)
     db.put(movies)
-    
+
+def retry_missing_images(request):
+    query = models.TopMovie.all().filter('has_image = ', False).order('__key__')
+    if 'last_key' in request.REQUEST:
+        query = models.TopMovie.all().filter('has_image = ', False).filter('__key__ >', db.Key(request.REQUEST['last_key'])).order('__key__')
+        
+    logging.info('Retrying missing images')
+    last_key = None
+    for movie in query.fetch(20):
+        taskqueue.add(url=reverse('topmovies.task_handler.get_movie_image'), params={'imdb_id': movie.imdb_id})
+        last_key = str(movie.key())
+
+    #Keep cycling through movies until we have retried them all
+    if last_key:
+        taskqueue.add(url=reverse('topmovies.task_handler.retry_missing_images'), params={'last_key': last_key})
+        
+    return HttpResponse('Done')    
 
 def get_movie_trailer(request):
     if 'imdb_id' not in request.REQUEST:
@@ -239,6 +255,7 @@ def get_movie_trailer(request):
         logging.error('Unable to search for movie trailer as non ascii title %s', movie.title)
         return HttpResponse('Fail. Non ascii title')
     client = gdata.youtube.service.YouTubeService()
+    client.developer_key = settings.YOUTUBE_DEV_ID
     query = gdata.youtube.service.YouTubeVideoQuery()
     #We only want videos we can embeded
     query.format = '5'
@@ -267,7 +284,7 @@ def get_movie_details(raw_name):
     replace_pattern = re.compile(r"\.")
     clean_name = replace_pattern.sub(' ', raw_name)
     
-    torrent_types = ['1080p', '\\d{4}[^p]', '720p', 'DVDRip', 'R5', 'DVDSCR', 'BDRip', '\\s+CAM', '\\sTS\\s']
+    torrent_types = ['1080p', '\\d{4}[^p]', '720p', 'DVDRip', 'R5', 'DVDSCR', 'BDRip', '\\s+CAM', '\\sTS\\s', 'PPV']
     name_pattern = re.compile(r'((LiMiTED\s*)?\(?\[?(' + '|'.join(torrent_types) + r')\)?\]?)', re.IGNORECASE)   
     name_match = name_pattern.split(clean_name)
     if not name_match:
@@ -313,15 +330,18 @@ def refresh_movie_category_reduce(request):
             movies.append(cat_result.movie)
             cat_result.active = True
             save_results.append(cat_result)
-            
-    db.delete(duplicate_results)
-    db.put(save_results)
-    movie_count = len(save_results)
-    #Now safe to remove active result
-    db.delete(active_results)
     
-    category.last_refreshed = datetime.datetime.today()
-    category.put()
+    movie_count = len(save_results)     
+    if movie_count:
+        db.delete(duplicate_results)
+        db.put(save_results)
+        #Now safe to remove active result
+        db.delete(active_results)
+    
+        category.last_refreshed = datetime.datetime.today()
+        category.put()
+    else:
+        logging.error('Ran reduce but found no new results')
     
     logging.info('Mapped movie %s category found %d movies', category.name, movie_count)
     return HttpResponse("Done. %d results for category %s" % (movie_count, category.name))
