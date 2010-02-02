@@ -89,7 +89,7 @@ function MovieCarousel (category, container, movieCount, xSize, ySize, mediaUrl)
                             YAHOO.log('Got Movie[' + category + ']: ' + movieDetails.title);
                 			carousel.addItem(getMovieNode(movieDetails));
                 			//Update order which is used for pagination
-                			if(movieDetails.order > offset){
+                			if(offset == 0 || movieDetails.order < offset){
                 			    offset = movieDetails.order;
                 			}
             			}
