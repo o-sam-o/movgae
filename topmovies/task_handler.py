@@ -3,7 +3,9 @@ import logging
 import re
 import sys
 import datetime
-from xml.dom import minidom 
+import math
+from xml.dom import minidom
+import xpath
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
@@ -28,77 +30,90 @@ from topmovies import tm_util
 
 def schedule_refreshes(request):
     logging.info('Scheduling refreshes')
-    for category in models.MovieCategory.all().filter('active = ', True):
-        for i in range(0, settings.MOVIE_REFRESH_PAGES):
-            taskqueue.add(url=reverse('topmovies.task_handler.refresh_movie_category'), 
-                params={'category': category.name, 'offset': i * settings.MOVIE_REFRESH_QUERY_SIZE})
+    for source in models.MovieListingSource.all().filter('active = ', True):
+        if source.paginate:
+            page_count = int(math.ceil(float(source.max_movie_count) / float(settings.MOVIE_REFRESH_QUERY_SIZE)))
+            for i in range(0, page_count):
+                taskqueue.add(url=reverse('topmovies.task_handler.refresh_movie_source'), 
+                    params={'source_key': source.key(), 'offset': i * settings.MOVIE_REFRESH_QUERY_SIZE})
+        else:
+            taskqueue.add(url=reverse('topmovies.task_handler.refresh_movie_source'), 
+                params={'source_key': source.key()})    
+    
+    #Then we reduce to publish the update, wait 5 mins to publish to ensure map completed, and all list entries loaded
+    taskqueue.add(url=reverse('topmovies.task_handler.list_entry_reduce'), countdown=settings.MOVIE_REFRESH_REDUCE_DELAY)    
     
     return HttpResponse('Done')
 
-def refresh_movie_category(request):
-    if 'category' not in request.REQUEST:
-        return HttpResponseServerError('No category specified in request params')
+def refresh_movie_source(request):
+    if 'source_key' not in request.REQUEST:
+        return HttpResponseServerError('No source key specified in request params')
         
-    category = models.MovieCategory.all().filter('name = ', request.REQUEST['category']).get()
-    if not category:
-        logging.error('Unable to find Category %s', request.REQUEST['category'])
-        return HttpResponse('Error unable to find Category')
-    elif not category.yql:
-        logging.error('No yql for category %s' % (category.name))
-        return HttpResponse('No YQL for category')
-    logging.info('Refreshing movie category %s', category.name)
+    source = models.MovieListingSource.get(request.REQUEST['source_key'])
+    if not source:
+        logging.error('Unable to find MovieListingSource: %s', request.REQUEST['source_key'])
+        return HttpResponse('Error unable to find Source')
+    elif not source.yql:
+        logging.error('No yql for MovieListingSource: %s' % str(source))
+        return HttpResponse('No YQL for source')
+    elif not source.settings:
+        logging.error('No settings for MovieListingSource: %s' % str(source))
+        return HttpResponse('No settings for source')    
         
-    query_offset = 0
+    logging.info('Refreshing movie from source %s', str(source))
+        
+    yql = source.yql
     if 'offset' in request.REQUEST:
-        query_offset = int(request.REQUEST['offset'])
-    form_data = urllib.urlencode({"q": category.yql + ' limit %d offset %d' % (settings.MOVIE_REFRESH_QUERY_SIZE, query_offset), 
-                                "format": "xml", "diagnostics": "false"})
+        query_offset = int(request.REQUEST['offset']) + 1
+        yql = '%s limit %d offset %d' % (yql, settings.MOVIE_REFRESH_QUERY_SIZE, query_offset)
+        
+    form_data = urllib.urlencode({"q": yql, "format": "xml", "diagnostics": "false"})
     result = urlfetch.fetch(url=settings.YQL_BASE_URL,payload=form_data,method=urlfetch.POST)
-    dom = minidom.parseString(result.content) 
+    dom = minidom.parseString(result.content)
+    
+    result_nodes = dom.getElementsByTagName('results')[0].childNodes
+    name_nodes = xpath.find(source.settings.name_xpath, dom)
+    leaches_nodes = xpath.find(source.settings.leaches_xpath, dom)
+    logging.info('Found %d raw names', len(name_nodes))
     
     strip_white_pattern = re.compile(r"\s+")
-    cat_results = []
-    for index, raw_result in enumerate(dom.getElementsByTagName('results')[0].childNodes):
-        logging.debug('Node: ' + raw_result.toxml())
-        raw_name = strip_white_pattern.sub(' ', getText(raw_result.childNodes))
-        logging.info('Raw Name [%s]: %s', category.name, raw_name)
-        cat_results.append(models.CategoryResult(raw_movie_name=raw_name, category=category, active=False, 
-                            order=(query_offset+index+1)))
+    source_results = []
+    for index, name_node in enumerate(name_nodes):
+        logging.debug('Node: ' + result_nodes[index].toxml())
+        raw_name = strip_white_pattern.sub(' ', getText(name_node))
+        leaches = strip_white_pattern.sub(' ', getText(leaches_nodes[index]))
+        logging.info('Raw Name: %s, Leaches: %s', raw_name, leaches)
+        source_results.append(models.MovieListEntry(raw_movie_name=raw_name, leaches=int(leaches), active=False))
     
-    db.put(cat_results)
+    db.put(source_results)
     
     #Refresh done using map/reduce.  First we map to find the movie details
-    for cat_result in cat_results:
-        taskqueue.add(url=reverse('topmovies.task_handler.find_movie'), params={'cat_result': cat_result.key()})
-    #Then we reduce to publish the update, wait 5 mins to publish to ensure map completed,
-    #however, we only want to do it onces per category so we only add if the offset is 0
-    if query_offset == 0:
-        taskqueue.add(url=reverse('topmovies.task_handler.refresh_movie_category_reduce'), 
-                        params={'category': category.name}, countdown=settings.MOVIE_REFRESH_REDUCE_DELAY)
+    for source_result in source_results:
+        taskqueue.add(url=reverse('topmovies.task_handler.find_movie'), params={'source_entry_key': source_result.key()})
         
-    return HttpResponse("Generated CategoryResult for %s." % (category.name))
+    return HttpResponse("Loaded results for source: %s" % str(source))
 
-def getText(nodelist):
+def getText(source_node):
     rc = ""
-    for node in nodelist:
+    for node in source_node.childNodes:
         if node.nodeType == node.TEXT_NODE:
             rc = rc + node.data
     return rc
 
 def find_movie(request):
-    if 'cat_result' not in request.REQUEST:
-        return HttpResponseServerError('No category result (cat_result) key in request params')
+    if 'source_entry_key' not in request.REQUEST:
+        return HttpResponseServerError('No MovieListEntry key  (source_entry_key) key in request params')
         
-    cat_result = models.CategoryResult.get(request.REQUEST['cat_result'])
-    if not cat_result:
-        logging.error('Unable to find CategoryResult %s', request.REQUEST['cat_result'])
-        return HttpResponse('Error: Unable to find CategoryResult')
+    source_entry = models.MovieListEntry.get(request.REQUEST['source_entry_key'])
+    if not source_entry:
+        logging.error('Unable to find MovieListEntry %s', request.REQUEST['source_entry_key'])
+        return HttpResponse('Error: Unable to find MovieListEntry')
         
-    logging.info('Finding movie for raw name %s' % cat_result.raw_movie_name)
+    logging.info('Finding movie for raw name %s' % source_entry.raw_movie_name)
     try:
-        movie_name, movie_year = get_movie_details(cat_result.raw_movie_name)
+        movie_name, movie_year = get_movie_details(source_entry.raw_movie_name)
         if not movie_name:
-            raise GetMovieException("Unable to find movie name from raw name '%s'" % cat_result.raw_movie_name)
+            raise GetMovieException("Unable to find movie name from raw name '%s'" % source_entry.raw_movie_name)
     
         #First check to see if we already have a matching movie
         existing_movie = None
@@ -109,26 +124,27 @@ def find_movie(request):
             existing_movie = models.TopMovie.all().filter('other_titles = ', movie_name).get()
     
         if existing_movie:
-            logging.info("Found existing movie entity for raw movie name %s", cat_result.raw_movie_name)
-            cat_result.movie = existing_movie
-            cat_result.put()
+            logging.info("Found existing movie entity for raw movie name %s", source_entry.raw_movie_name)
+            source_entry.movie = existing_movie
+            source_entry.put()
             return HttpResponse("Done.  Found existing movie entity: %s" % existing_movie.key())
         
         ia = IMDb('http')
         movies = ia.search_movie(movie_name)
         if not movies:
-            raise GetMovieException("Unable to find movie name from name '%s', raw name '%s'" % (movie_name, cat_result.raw_movie_name))
+            raise GetMovieException("Unable to find movie name from name '%s', raw name '%s'" % (movie_name, source_entry.raw_movie_name))
     
         result_movie = None
         for movie in movies:
             logging.info("Found movie '%s' %s [%s] for search '%s'", 
                 movie['title'], movie['year'], movie.movieID, movie_name)
+            #If we dont have a year we should try to find the highest year value
             if not movie_year or movie_year == movie['year']:
                 result_movie = movie
                 break
     
         if not result_movie:
-            raise GetMovieException("Unable to find imdb movie for raw name '%s' [%s]" % (cat_result.raw_movie_name, cat_result.key()))
+            raise GetMovieException("Unable to find imdb movie for raw name '%s' [%s]" % (source_entry.raw_movie_name, source_entry.key()))
     
         logging.info("Found match imdb movie %s", result_movie.movieID)
         existing_movie = models.TopMovie.all().filter('title = ', result_movie['title']).filter('year = ', result_movie['year']).get()
@@ -136,7 +152,7 @@ def find_movie(request):
             #Add into other titles so we dont have to hit imdb again
             existing_movie.other_titles.append(movie_name)
             existing_movie.put()
-            cat_result.movie = existing_movie
+            source_entry.movie = existing_movie
         else:
             logging.info('Adding new movie %s', result_movie['title'])
             #Use slugged movie title and year as key to prevent duplicates
@@ -148,26 +164,26 @@ def find_movie(request):
                                 active=True,
                                 has_image=False)
             movie_entity.put()   
-            cat_result.movie = movie_entity
+            source_entry.movie = movie_entity
             #Schedule task to download a thumbnail image and try to find a trailer on youtube
-            taskqueue.add(url=reverse('topmovies.task_handler.get_movie_image'), params={'imdb_id': result_movie.movieID})
+            taskqueue.add(url=reverse('topmovies.task_handler.get_movie_image_and_genres'), params={'imdb_id': result_movie.movieID})
             taskqueue.add(url=reverse('topmovies.task_handler.get_movie_trailer'), params={'imdb_id': result_movie.movieID})
-        cat_result.put()
+        source_entry.put()
     
-        return HttpResponse("Done.  Added TopMovie %s" % cat_result.movie.key())
+        return HttpResponse("Done.  Added TopMovie %s" % source_entry.movie.key())
     except GetMovieException, details:
         #Log error details and remove no longer valid cat results
         error_details = str(details)
-        logging.warn("Unable to retrive movie details for raw name '%s'\n%s", cat_result.raw_movie_name, error_details)
+        logging.warn("Unable to retrive movie details for raw name '%s'\n%s", source_entry.raw_movie_name, error_details)
         #Create a failure entity if one doesnt already exist
-        if not models.GetMovieFailure.all().filter('raw_movie_name = ', cat_result.raw_movie_name).count(1):
-            failure = models.GetMovieFailure(raw_movie_name=cat_result.raw_movie_name, error_message=error_details)
+        if not models.GetMovieFailure.all().filter('raw_movie_name = ', source_entry.raw_movie_name).count(1):
+            failure = models.GetMovieFailure(raw_movie_name=source_entry.raw_movie_name, error_message=error_details)
             failure.put()
         
-        cat_result.delete()
+        source_entry.delete()
         return HttpResponse("Error: %s" % error_details)
 
-def get_movie_image(request):
+def get_movie_image_and_genres(request):
     if 'imdb_id' not in request.REQUEST:
         return HttpResponseServerError('Unable to load movie poster')    
     imdb_id = request.REQUEST['imdb_id']
@@ -184,6 +200,7 @@ def get_movie_image(request):
     ia = IMDb('http')
     imdb_movie = ia.get_movie(imdb_id)
     try:
+        set_genres(imdb_id, imdb_movie['genres'])
         cover_url = imdb_movie['cover']
         logging.info('Got url %s', cover_url)
         
@@ -222,6 +239,13 @@ def mark_has_image(imdb_id, has_image):
         movies.append(movie)
     db.put(movies)
 
+def set_genres(imdb_id, genres):
+    movies = []
+    for movie in models.TopMovie.all().filter('imdb_id =', imdb_id):
+        movie.genres = genres
+        movies.append(movie)
+    db.put(movies)    
+    
 def retry_missing_images(request):
     query = models.TopMovie.all().filter('has_image = ', False).order('__key__')
     if 'last_key' in request.REQUEST:
@@ -238,6 +262,29 @@ def retry_missing_images(request):
         taskqueue.add(url=reverse('topmovies.task_handler.retry_missing_images'), params={'last_key': last_key})
         
     return HttpResponse('Done')    
+
+def get_missing_genres(request):
+    query = models.TopMovie.all().order('__key__')
+    if 'last_key' in request.REQUEST:
+        query = models.TopMovie.all().filter('__key__ >', db.Key(request.REQUEST['last_key'])).order('__key__')
+
+    last_key = None
+    for movie in query.fetch(1):
+        imdb_id = movie.imdb_id
+        logging.info('Retrying missing genre for %s', imdb_id)
+        ia = IMDb('http')
+        imdb_movie = ia.get_movie(imdb_id)
+        try:
+            set_genres(imdb_id, imdb_movie['genres'])
+        except:
+            logging.error('Unable to find genres for imdb movie %s', imdb_id)
+        last_key = str(movie.key())        
+
+    #Keep cycling through movies until we have retried them all
+    if last_key:
+        taskqueue.add(url=reverse('topmovies.task_handler.get_missing_genres'), params={'last_key': last_key})
+
+    return HttpResponse('Done for %s' % last_key)
 
 def get_movie_trailer(request):
     if 'imdb_id' not in request.REQUEST:
@@ -304,48 +351,58 @@ def get_movie_details(raw_name):
     
     return movie_name.strip(), movie_year
 
-def refresh_movie_category_reduce(request):    
-    if 'category' not in request.REQUEST:
-        return HttpResponseServerError('No category specified in request params')
-    logging.info('Refresh movie reduce for %s', request.REQUEST['category'])
+def list_entry_reduce(request):
+    """Merges list entries for the same item"""
+    query = models.MovieListEntry.all().filter('active = ', False).order('__key__')
+    if 'last_key' in request.REQUEST:
+        query = models.MovieListEntry.all().filter('active = ', False).filter('__key__ >', db.Key(request.REQUEST['last_key'])).order('__key__')
         
-    category = models.MovieCategory.all().filter('name = ', request.REQUEST['category']).get()
-    if not category:
-        logging.error('Unable to find Category %s', request.REQUEST['category'])
-        return HttpResponse('Error unable to find Category')
-    logging.info('Mapping movie %s category refresh', category.name)
-    
-    #First get all active results for removal
-    active_results = models.CategoryResult.all().filter('active = ', True).filter('category = ', category).fetch(100)
-    #Now remove any duplicates and mark active
-    save_results = []
-    movies = []
-    duplicate_results = []
-    for cat_result in models.CategoryResult.all().filter('active = ', False).filter('category = ', category):
-        if not cat_result.movie:
+    logging.info('reducing list entries')
+    last_key = None
+    for entry in query.fetch(10):
+        last_key = str(entry.key())
+        if not entry.movie or not entry.movie.active:
+            entry.delete()
             continue
-        elif cat_result.movie in movies or not cat_result.movie.active:
-            duplicate_results.append(cat_result)
+        #Try to find another entry with the same movie (i.e. check to see if the current entry is a duplicate)
+        master_entry = models.MovieListEntry.all().filter('active = ', False).filter('movie = ', entry.movie).filter('__key__ <', entry.key()).get()
+        if master_entry:
+            #If this is a new raw name we assume its a new torrent and therefore the leache tally should be increased
+            if entry.raw_movie_name not in master_entry.other_raw_names:
+                master_entry.leaches = master_entry.leaches + entry.leaches
+                master_entry.other_raw_names.append(entry.raw_movie_name)
+            entry.delete()
         else:
-            movies.append(cat_result.movie)
-            cat_result.active = True
-            save_results.append(cat_result)
-    
-    movie_count = len(save_results)     
-    if movie_count:
-        db.delete(duplicate_results)
-        db.put(save_results)
-        #Now safe to remove active result
-        db.delete(active_results)
-    
-        category.last_refreshed = datetime.datetime.today()
-        category.put()
+            entry.genres = entry.movie.genres
+            master_entry = entry
+        master_entry.put()
+
+    #Keep cycling through movies until we have retried them all
+    if last_key:
+        taskqueue.add(url=reverse('topmovies.task_handler.list_entry_reduce'), params={'last_key': last_key})
     else:
-        logging.error('Ran reduce but found no new results')
+        taskqueue.add(url=reverse('topmovies.task_handler.switch_active_list_entries'))
+        
+    return HttpResponse('Done')
+
+def switch_active_list_entries(request):
+    """Switch the active entries to values just loaded"""
+    #TODO rewrite this function as it wont scale!
+    active_entries = models.MovieListEntry.all().filter('active = ', True).fetch(1000)
+    new_entries = []
+    for entry in models.MovieListEntry.all().filter('active = ', False):
+        entry.active  = True
+        new_entries.append(entry)
     
-    logging.info('Mapped movie %s category found %d movies', category.name, movie_count)
-    return HttpResponse("Done. %d results for category %s" % (movie_count, category.name))
-    
+    entry_count = len(new_entries)
+    if entry_count:
+        db.delete(active_entries)
+        db.put(new_entries)
+        logging.info('Switched active entries, new active entrie count %d', entry_count)
+        return HttpResponse('Done actived %d entries' % entry_count)
+    else:
+        logging.error('Switch active entries run but no entries to activate found ...')
+        return HttpResponse('Error: no entries to activate found.')
     
 class GetMovieException(Exception):
     """Exception throw if unable to get movie details from raw movie name"""

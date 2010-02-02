@@ -1,3 +1,6 @@
+import string
+import logging
+
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.utils.translation import ugettext as _
@@ -23,6 +26,9 @@ def categories(request):
         {'categories': models.MovieCategory.all().filter('active = ', True).order('name')})
 
 def movie_category(request, category_name):
+    #Fix cat name so matched, imdb format, most hackiness needed for Sci-Fi
+    category_name = string.capwords(category_name.replace('-', '- ')).replace('- ', '-')
+    logging.info('Cat name %s', category_name)    
     category = models.MovieCategory.all().filter('name = ', category_name).get()
     if not category:
         raise Http404
@@ -32,9 +38,8 @@ def movie_category(request, category_name):
     return render_to_response(request, 'category_list.html', {'category': category, 'movie_count': movie_count})
 
 def get_movie_count(category):
-    return (models.CategoryResult.all().filter('category =', category)
+    return (models.MovieListEntry.all().filter('genres =', category.name)
                                        .filter('active =', True)
-                                       .order('order')
                                        .count(300))
 
 def get_movies_as_json(request, category_name):
@@ -45,24 +50,32 @@ def get_movies_as_json(request, category_name):
     offset = 0
     if 'offset' in request.REQUEST:
         offset = int(request.REQUEST['offset'])
+    logging.info('offset %d', offset)
     page_size = 10
     if 'pageSize' in request.REQUEST:
         page_size = int(request.REQUEST['pageSize'])
     
-    cat_results = (models.CategoryResult.all().filter('category =', category)
-                                         .filter('active =', True)
-                                         .filter('order >', offset)
-                                         .order('order')
-                                         .fetch(page_size))
+    entries = []
+    if offset:
+        entries = (models.MovieListEntry.all().filter('genres =', category.name)
+                                              .filter('active =', True)
+                                              .filter('leaches <', offset)
+                                              .order('-leaches')
+                                              .fetch(page_size))
+    else:
+        entries = (models.MovieListEntry.all().filter('genres =', category.name)
+                                              .filter('active =', True)
+                                              .order('-leaches')
+                                              .fetch(page_size))
     
     results = []
-    for cat_result in cat_results:
-        results.append({'title'      : cat_result.movie.title,
-                        'year'       : cat_result.movie.year,
-                        'imdb_id'    : cat_result.movie.imdb_id,
-                        'youtube_url': cat_result.movie.youtube_url,
-                        'key'        : str(cat_result.movie.key()),
-                        'order'      : cat_result.order})
+    for entry in entries:
+        results.append({'title'      : entry.movie.title,
+                        'year'       : entry.movie.year,
+                        'imdb_id'    : entry.movie.imdb_id,
+                        'youtube_url': entry.movie.youtube_url,
+                        'key'        : str(entry.movie.key()),
+                        'order'      : entry.leaches})
     
     return HttpResponse(simplejson.dumps(results),content_type="application/json")                    
     
