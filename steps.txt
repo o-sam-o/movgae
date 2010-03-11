@@ -40,6 +40,10 @@
 * template middleware to populate menu categories
 * fix get movie details -> use split
 * key_name in TopMovie to prevent duplicates
+* updated to imdbpy 4.3
+* hacked parser.http.__init__.py line 166
+* added retry all images
+* dont clear active records if no new records in reduce
 
 
 TODO
