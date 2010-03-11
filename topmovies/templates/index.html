@@ -20,7 +20,7 @@
 			{% for category in categories %}
 				var {{ category.category.name|js_var }}Carousel = new MovieCarousel("{{ category.category.name }}",
 					"{{ category.category.name }}MovieCarousel", 
-					{{ category.movie_count }}, 4, 1, "{{ MEDIA_URL }}");
+					{{ category.movie_count }}, 5, 1, "{{ MEDIA_URL }}");
 			{% endfor %}
 		</script>
 	{% else %}

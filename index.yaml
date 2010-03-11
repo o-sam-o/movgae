@@ -10,28 +10,31 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-# Used once in query history.
 - kind: django_admin_log
   properties:
   - name: user
   - name: action_time
     direction: desc
 
-# Used 104 times in query history.
 - kind: topmovies_categoryresult
   properties:
   - name: active
   - name: category
   - name: order
 
-# Unused in query history -- copied from input.
 - kind: topmovies_moviecategory
   properties:
   - name: active
   - name: name
 
-# Used 69 times in query history.
 - kind: topmovies_moviecategory
   properties:
   - name: active
   - name: order
+
+- kind: topmovies_movielistentry
+  properties:
+  - name: active
+  - name: genres
+  - name: leaches
+    direction: desc
