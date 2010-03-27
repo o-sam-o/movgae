@@ -15,6 +15,10 @@ urlpatterns = patterns('',
     ('^about/$', 'django.views.generic.simple.direct_to_template',
         {'template': 'about.html'}),
     ('^categories/$', 'topmovies.views.categories'),
+    
+    ('^all/$', 'topmovies.views.all_movies'),
+    ('^all/json/$', 'topmovies.views.all_movies_as_json'),
+    
     ('^(?P<category_name>[\w-]+)/json/$', 'topmovies.views.get_movies_as_json'),
     ('^(?P<category_name>[\w-]+)/$', 'topmovies.views.movie_category'),
 

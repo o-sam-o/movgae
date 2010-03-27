@@ -387,7 +387,7 @@ class DOMParserBase(object):
         otherwise."""
         # Module to use.
         if useModule is None:
-            useModule = ('lxml', 'BeautifulSoup')
+            useModule = ('BeautifulSoup')
         if not isinstance(useModule, (tuple, list)):
             useModule = [useModule]
         self._useModule = useModule

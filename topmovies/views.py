@@ -42,18 +42,34 @@ def get_movie_count(category):
                                        .filter('active =', True)
                                        .count(300))
 
+def all_movies(request):
+    movie_count = models.MovieListEntry.all().filter('active =', True).count(1000)
+    #Bit of a hack to let us use the existing template
+    all_category = models.MovieCategory(name='all')
+    return render_to_response(request, 'category_list.html', {'category': all_category, 'movie_count': movie_count})
+
+def all_movies_as_json(request):
+    offset, page_size = get_offset_and_page_size(request)
+    
+    entries = []
+    if offset:
+        entries = (models.MovieListEntry.all().filter('active =', True)
+                                          .filter('leaches <', offset)
+                                          .order('-leaches')
+                                          .fetch(page_size))
+    else:
+        entries = (models.MovieListEntry.all().filter('active =', True)
+                                          .order('-leaches')
+                                          .fetch(page_size))
+    
+    return HttpResponse(simplejson.dumps(movies_as_json_map(entries)),content_type="application/json")
+
 def get_movies_as_json(request, category_name):
     category = models.MovieCategory.all().filter('name = ', category_name).get()
     if not category:
         raise Http404
     
-    offset = 0
-    if 'offset' in request.REQUEST:
-        offset = int(request.REQUEST['offset'])
-    logging.info('offset %d', offset)
-    page_size = 10
-    if 'pageSize' in request.REQUEST:
-        page_size = int(request.REQUEST['pageSize'])
+    offset, page_size = get_offset_and_page_size(request)
     
     entries = []
     if offset:
@@ -68,6 +84,20 @@ def get_movies_as_json(request, category_name):
                                               .order('-leaches')
                                               .fetch(page_size))
     
+    return HttpResponse(simplejson.dumps(movies_as_json_map(entries)),content_type="application/json")                    
+
+def get_offset_and_page_size(request):
+    offset = 0
+    if 'offset' in request.REQUEST:
+        offset = int(request.REQUEST['offset'])
+    logging.info('offset %d', offset)
+    page_size = 10
+    if 'pageSize' in request.REQUEST:
+        page_size = int(request.REQUEST['pageSize'])
+    
+    return offset, page_size
+
+def movies_as_json_map(entries):
     results = []
     for entry in entries:
         results.append({'title'      : entry.movie.title,
@@ -77,7 +107,7 @@ def get_movies_as_json(request, category_name):
                         'key'        : str(entry.movie.key()),
                         'order'      : entry.leaches})
     
-    return HttpResponse(simplejson.dumps(results),content_type="application/json")                    
+    return results    
     
 def get_movie_image(request, imdb_id):
     movie_image = models.TopMovieImage.all().filter('imdb_id =', imdb_id).get()

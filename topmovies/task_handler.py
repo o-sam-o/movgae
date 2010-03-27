@@ -254,7 +254,7 @@ def retry_missing_images(request):
     logging.info('Retrying missing images')
     last_key = None
     for movie in query.fetch(20):
-        taskqueue.add(url=reverse('topmovies.task_handler.get_movie_image'), params={'imdb_id': movie.imdb_id})
+        taskqueue.add(url=reverse('topmovies.task_handler.get_movie_image_and_genres'), params={'imdb_id': movie.imdb_id})
         last_key = str(movie.key())
 
     #Keep cycling through movies until we have retried them all

@@ -8,6 +8,7 @@
 			{% for category in categories %}
 				<li><h6><a href="/{{category.name|lower}}">{{category.name|capfirst}}</a></h6></li>
 			{% endfor %}
+			<li><h6><a href="/all">All Movies</a></h6></li>
 		</ul>
 		{% else %}
 			No movie categories

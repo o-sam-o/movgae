@@ -38,3 +38,9 @@ indexes:
   - name: genres
   - name: leaches
     direction: desc
+
+- kind: topmovies_movielistentry
+  properties:
+  - name: active
+  - name: leaches
+    direction: desc
