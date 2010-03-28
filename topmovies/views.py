@@ -9,6 +9,8 @@ from django.http import Http404
 from django import conf
 from django.utils import simplejson
 
+from google.appengine.api import memcache
+
 from topmovies import models
 
 def index(request):
@@ -71,20 +73,25 @@ def get_movies_as_json(request, category_name):
     
     offset, page_size = get_offset_and_page_size(request)
     
-    entries = []
-    if offset:
-        entries = (models.MovieListEntry.all().filter('genres =', category.name)
-                                              .filter('active =', True)
-                                              .filter('leaches <', offset)
-                                              .order('-leaches')
-                                              .fetch(page_size))
-    else:
-        entries = (models.MovieListEntry.all().filter('genres =', category.name)
-                                              .filter('active =', True)
-                                              .order('-leaches')
-                                              .fetch(page_size))
-    
-    return HttpResponse(simplejson.dumps(movies_as_json_map(entries)),content_type="application/json")                    
+    result_json = memcache.get(get_json_memcache_key(category_name, offset, page_size))
+    if not result_json:
+        entries = []
+        if offset:
+            entries = (models.MovieListEntry.all().filter('genres =', category.name)
+                                                  .filter('active =', True)
+                                                  .filter('leaches <', offset)
+                                                  .order('-leaches')
+                                                  .fetch(page_size))
+        else:
+            entries = (models.MovieListEntry.all().filter('genres =', category.name)
+                                                  .filter('active =', True)
+                                                  .order('-leaches')
+                                                  .fetch(page_size))
+        
+        result_json = simplejson.dumps(movies_as_json_map(entries))
+        memcache.set(key=get_json_memcache_key(category_name, offset, page_size), value=result_json, time=3600)
+        
+    return HttpResponse(result_json,content_type="application/json")                    
 
 def get_offset_and_page_size(request):
     offset = 0
@@ -96,6 +103,12 @@ def get_offset_and_page_size(request):
         page_size = int(request.REQUEST['pageSize'])
     
     return offset, page_size
+
+def get_json_memcache_key(category_name, offset, page_size):
+    if offset:
+        return category_name + "-" + str(offset) + "-" + str(page_size)
+    else:
+        return category_name + "-" + str(page_size)
 
 def movies_as_json_map(entries):
     results = []
@@ -110,9 +123,14 @@ def movies_as_json_map(entries):
     return results    
     
 def get_movie_image(request, imdb_id):
+    movie_image = memcache.get("image-" + imdb_id)
+    if movie_image:
+        return HttpResponse(content=movie_image.img_data, mimetype=movie_image.content_type)
+        
     movie_image = models.TopMovieImage.all().filter('imdb_id =', imdb_id).get()
     if not movie_image:
         return HttpResponseRedirect(conf.settings.MEDIA_URL + 'topmovies/no_preview.jpg')   
-    
-    return HttpResponse(content=movie_image.img_data, mimetype=movie_image.content_type)
+    else:
+        memcache.set("image-" + imdb_id, movie_image)
+        return HttpResponse(content=movie_image.img_data, mimetype=movie_image.content_type)
     

@@ -52,13 +52,13 @@ function MovieCarousel (category, container, movieCount, xSize, ySize, mediaUrl)
 	    }		
 		if (movieDetails.youtube_url){
 		movieNode = movieNode + "	<div class=\"youtubeLink\">"+
-		"		<a href=\"" + movieDetails.youtube_url + "\">"+
+		"		<a href=\"" + movieDetails.youtube_url + "\" target='_blank'>"+
 		"			<img src=\"" + mediaUrl + "topmovies/youtube_icon.png\"/>"+
 		"		</a>"+
 		"	</div>";
 	    }
 		movieNode = movieNode + "<div class=\"imdbLink\">"+
-		"<a href=\"http://www.imdb.com/title/tt" + movieDetails.imdb_id + "\">"+
+		"<a href=\"http://www.imdb.com/title/tt" + movieDetails.imdb_id + "\" target='_blank'>"+
 		"		<img src=\"" + mediaUrl + "topmovies/imdb_icon.png\"/>"+
 		"	</a>"+
 		"</div>"+

@@ -7,28 +7,29 @@
 		Film Cloud is a movie recommendation engine which monitors internet activity to collate a comprehensive list of movies that are currently in vogue.  These movies are then displayed in a simple but descriptive manner with links to <a href="http://www.imdb.com">IMDB</a> and <a href="http://www.youtube.com">YouTube</a> trailers, allowing you to easily find the next movie <b>you'll</b> be watching.
 	</div>
 	
-	<div class="post">
-		<h5>Credits</h5>
-		<div style="padding-bottom: 10px;">
-			Developed by <b>Sam Cavenagh</b> (<a href="mailto:cavenaghweb@hotmail.com">cavenaghweb@hotmail.com</a>), feel free to contact me with comments or suggestions.
-		</div>
-		
-		<h5>Badges</h5>
-		<a href="http://imdbpy.sourceforge.net/">
-			<img src="{{ MEDIA_URL }}topmovies/imdbpyPowered.png" alt="Powered by IMDBPY"/>
-		</a>
-		<br/>	
-		<a href="http://code.google.com/appengine/">
-			<img src="http://code.google.com/appengine/images/appengine-silver-120x30.gif" alt="Powered by Google App Engine" />
-		</a>
-		<br/>
+	<div class="post">	
+		<hr width="810px"/>	
+		<div class="aboutImgWrapper" style="margin-left: 150px;">
 		<a href="http://www.djangoproject.com/">
 			<img src="http://media.djangoproject.com/img/badges/djangopowered126x54.gif" border="0" alt="Powered by Django." title="Powered by Django." />
 		</a>
-		<br/>
+		</div>
+		<div class="aboutImgWrapper">
+		<a href="http://imdbpy.sourceforge.net/">
+			<img src="{{ MEDIA_URL }}topmovies/imdbpyPowered.png" alt="Powered by IMDBPY"/>
+		</a>
+		</div>
+		<div class="aboutImgWrapper">	
+		<a href="http://code.google.com/appengine/">
+			<img src="http://code.google.com/appengine/images/appengine-silver-120x30.gif" alt="Powered by Google App Engine" />
+		</a>
+		</div>
+
+		<div class="aboutImgWrapper">
 		<a href="http://code.google.com/p/app-engine-patch/">
 			<img src="{{ MEDIA_URL }}topmovies/powered_by_aap.png" alt="Powered by App Engine Patch" />
 		</a>
+		</div>
 	</div>
 	
 {% endblock content %}

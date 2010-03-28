@@ -7,6 +7,7 @@ function setCustomLinks(){
 			var movieTitle = linkNode.getAttribute('movieTitle');
 			//YAHOO.log(customLink + ' ' + movieTitle);
 			linkNode.href = customLink.replace('%TITLE%', movieTitle);
+			linkNode.target = '_blank';
 		}
 		//No need to display config dialog on config anymore
 		YAHOO.util.Event.removeListener(customLinkNodes, "click", showCustomLinkDialog); 

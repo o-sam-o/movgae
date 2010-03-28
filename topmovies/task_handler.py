@@ -28,6 +28,8 @@ from topmovies import models
 from topmovies import settings
 from topmovies import tm_util
 
+from google.appengine.api import memcache
+
 def schedule_refreshes(request):
     logging.info('Scheduling refreshes')
     for source in models.MovieListingSource.all().filter('active = ', True):
@@ -399,6 +401,8 @@ def switch_active_list_entries(request):
         db.delete(active_entries)
         db.put(new_entries)
         logging.info('Switched active entries, new active entrie count %d', entry_count)
+        #Blow away memcache, as cached json now invalid
+        memcache.flush_all()
         return HttpResponse('Done actived %d entries' % entry_count)
     else:
         logging.error('Switch active entries run but no entries to activate found ...')
