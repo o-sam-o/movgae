@@ -1,7 +1,7 @@
 # Movgae
 Overview
 --------
-This is a short two week project I completed to find popular movies based on torrent stats.  The app is currently deployed at [http://filmclould.appspot.com](http://filmclould.appspot.com).  This project was just hacked together, please excuse the quality of the code.
+This is a short two week project I completed to find popular movies based on torrent stats.  The app is currently deployed at [http://filmcloud.appspot.com/](http://filmcloud.appspot.com/).  This project was just hacked together, please excuse the quality of the code.
 
 Features
 --------
