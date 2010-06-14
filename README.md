@@ -5,10 +5,10 @@ This is a short two week project I completed to find popular movies based on tor
 
 Features
 --------
- * Scrap torrent search sites for popular movies
- * Scrap IMDB for poster + info on movies
+ * Scrape torrent search sites for popular movies
+ * Scrape IMDB for poster + info on movies
  * Display movies using a Javascript carousel, grouping movies by genre and ordering by swarm size 
- * Movie trailer sourced from YouTube and embed in the page
+ * Movie trailer sourced from YouTube and embedded in the page
  * YQL + XPath admin interface for adding new source torrent sites.
 
 Technologies
@@ -25,7 +25,7 @@ Setup
 -----
 The project is designed for deployment on [AppEngine](http://code.google.com/appengine/) please review their documentation for deployment instructions.  Once deployed hit: http://{YOUR APP}.appspot.com/admin, you should be asked to login with your google username and password.  Once inside you will need to setup listing settings, movie sources and categories.
 
-_Movie Listing Settings:_ The settings consist of two xpath, used to extract the torrent name and leach count from the YQL result.  
+_Movie Listing Settings:_ The settings consist of two paths, used to extract the torrent name and leach count from the YQL result.  
 
 E.g. for The Pirate Bay 
 
@@ -38,7 +38,7 @@ Leaches XPath:
 	
 	//td[4]/p
 	
-_Movie Listing Sources:_ This is a YQL query used to scrap a torrent site, it should be paired with a movie listing setting.
+_Movie Listing Sources:_ This is a YQL query used to scrape a torrent site, it should be paired with a movie listing setting.
 
 E.g. The Pirate Bay YQL:
 
